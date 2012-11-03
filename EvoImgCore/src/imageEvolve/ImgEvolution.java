@@ -2,13 +2,11 @@ package imageEvolve;
 
 import imageEvolve.EvoImg;
 import imageEvolve.EvoControl.Evolution;
-
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Random;
-
 import javax.imageio.ImageIO;
 
 /** Class is the main driver to create images evolved by a genetic programming algorithm.
@@ -53,7 +51,7 @@ public class ImgEvolution {
 	 * @param args arguments are ignored
 	 */
 	public static void main(String[] args){
-		// Make an instance 
+		// Make an instance
 		ImgEvolution e = new ImgEvolution();
 		// Get target image
 		e.sourceImg = ImgEvolution.getSourceImage(new File("canvas.png"));
@@ -61,7 +59,7 @@ public class ImgEvolution {
 		e.control.size_x = e.sourceImg.getWidth();
 		e.control.size_y = e.sourceImg.getHeight();
 		e.control.polygons = 100;
-		e.control.vertices = 6;
+		e.control.vertices = 3;
 		e.control.population = 40;
 		e.control.alg = Evolution.GA;
 		e.control.initColor = EvoControl.InitColor.RAND;
@@ -71,7 +69,7 @@ public class ImgEvolution {
 		e.control.mutationDegree = 0.1;
 		e.control.uniformCross = true;
 		e.control.parentCutoff = 0.1;
-		e.control.killParents = false;
+		e.control.killParents = true;
 		e.control.rndCutoff = false;
 		e.control.threshold = 0.985;
 		// Run evolution
@@ -98,12 +96,14 @@ public class ImgEvolution {
 	 * generated image is past threshold for being similar to target.
 	 */
 	private void evolveHC(){
-		// Create initial random dna
+		// get start time
+		long startTime = System.currentTimeMillis();
+		// create initial random dna
 		this.best = new EvoImg(this.control);
 		this.best.render();
 		this.best.compare(this.sourceImg);
 		ImgEvolution.outputImage(this.best.image, "png", new File("best0.png"));
-		// Evolution loop
+		// evolution loop
 		int cntGen=0; // generation counter
 		EvoImg test;
 		while (this.best.fitness < this.control.threshold){
@@ -116,7 +116,9 @@ public class ImgEvolution {
 			if(test.fitness > this.best.fitness){
 				this.best = test;
 				ImgEvolution.outputImage(this.best.image, "png", new File("best.png"));
-				System.out.println("New best found! n="+cntGen+" fitness="+this.best.fitness);
+				System.out.println("New best found! n="+cntGen
+						+" fitness="+this.best.fitness
+						+" elapsedTime="+fmtTimeDiff(System.currentTimeMillis(),startTime));
 			}
 			cntGen++;
 		}
@@ -127,12 +129,14 @@ public class ImgEvolution {
 	 * generated image is past threshold for being similar to target.
 	 */
 	private void evolveGA(){
-		// Create initial random population
+		// get start time
+		long startTime = System.currentTimeMillis();
+		// create initial random population
 		this.population = new EvoImg[this.control.population];
 		for (int i=0; i<this.population.length; i++){
 			this.population[i] = new EvoImg(this.control);
 		}
-		// Evolution loop
+		// evolution loop
 		int cntGen=0; // generation counter
 		while (this.best==null || this.best.fitness < this.control.threshold){
 			// render each image and calculate fitness
@@ -151,16 +155,14 @@ public class ImgEvolution {
 				this.best = this.population[this.control.population-1];
 				//ImgEvolution.outputImage(this.best.image, "png", new File("best"+cntGen+".png"));
 				ImgEvolution.outputImage(this.best.image, "png", new File("best.png"));
-				System.out.println("New best found! n="+cntGen+" fitness="+this.best.fitness);
+				System.out.println("New best found! n="+cntGen
+						+" fitness="+this.best.fitness
+						+" elapsedTime="+fmtTimeDiff(System.currentTimeMillis(),startTime));
 			}
 			// create next population
 			this.nextGeneration();
 			// increment generation counter
 			cntGen++;
-			/* break loop for debugging
-			if (cntGen>1000){
-				break;
-			} //*/
 		}
 	}
 	/** Helper function for evolveGA.
@@ -193,8 +195,8 @@ public class ImgEvolution {
 			// using gaussian distribution to give higher fitness
 			// parents priority
 			EvoImg[] tmp = EvoImg.crossBreed(
-					this.population[this.population.length-(int)Math.abs(rndSrc.get().nextGaussian()*parentRange)],
-					this.population[this.population.length-(int)Math.abs(rndSrc.get().nextGaussian()*parentRange)],
+					this.population[this.population.length-(int)Math.abs(rndSrc.get().nextGaussian()*parentRange)-1],
+					this.population[this.population.length-(int)Math.abs(rndSrc.get().nextGaussian()*parentRange)-1],
 					this.control.uniformCross);
 			// mutate children
 			tmp[0].mutate(this.control);
@@ -212,6 +214,21 @@ public class ImgEvolution {
 
 	}
 	
+	/** Method for showing time difference in human-readable format.
+	 * Best used with System.currentTimeMillis().
+	 * @param mills1 long start time
+	 * @param mills2 long end time
+	 * @return String time difference in hh:mm:ss.sss format.
+	 */
+	public static String fmtTimeDiff(long mills1, long mills2){
+		long diff = (mills2>mills1)?mills2-mills1:mills1-mills2;
+		long hrs = diff/3600000;
+		long mins = diff/60000-hrs*60;
+		double secs = diff/1000-(double)mins*60-(double)hrs*3600;
+		return String.format("02d",hrs)+":"
+				+String.format("02d",mins)+":"
+				+String.format("02.3f",secs);
+	}
 	
 	/** Read an image from a file
 	 * @param image File to be 
