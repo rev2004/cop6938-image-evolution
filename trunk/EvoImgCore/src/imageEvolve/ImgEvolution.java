@@ -1,9 +1,15 @@
 package imageEvolve;
 
 import imageEvolve.EvoImg;
+import imageEvolve.EvoControl.CompMode;
+import imageEvolve.EvoControl.InitColor;
+import imageEvolve.EvoControl.Mutation;
+
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
+
 import javax.imageio.ImageIO;
 
 /** Class is the main driver to create images evolved by a genetic programming algorithm.
@@ -54,13 +60,21 @@ public class ImgEvolution {
 		e.control.size_y = e.sourceImg.getHeight();
 		e.control.polygons = 100;
 		e.control.vertices = 6;
-		e.control.mutationMode = EvoControl.Mutation.MEDIUM;
+		e.control.population = 40;
 		e.control.initColor = EvoControl.InitColor.RAND;
+		e.control.mutationMode = EvoControl.Mutation.SOFT;
 		e.control.comparison = EvoControl.CompMode.DIFF;
+		e.control.mutationChance = 0.2;
+		e.control.mutationDegree = 0.1;
+		e.control.uniformCross = true;
+		e.control.parentCutoff = 0.1;
+		e.control.killParents = false;
+		e.control.rndCutoff = false;
 		e.control.threshold = 0.985;
 		// Run evolution
 		System.out.println("Evolution Starting");
-		e.evolveHC();
+		//e.evolveHC();
+		e.evolveGA();
 		System.out.println("Evolution Complete");
 	}
 	
@@ -75,7 +89,7 @@ public class ImgEvolution {
 		this.best.compare(this.sourceImg);
 		ImgEvolution.outputImage(this.best.image, "png", new File("best0.png"));
 		// Evolution loop
-		int i=1;
+		int cntGen=0; // generation counter
 		EvoImg test;
 		while (this.best.fitness < this.control.threshold){
 			// copy and mutate current best
@@ -87,9 +101,9 @@ public class ImgEvolution {
 			if(test.fitness > this.best.fitness){
 				this.best = test;
 				ImgEvolution.outputImage(this.best.image, "png", new File("best.png"));
-				System.out.println("New best found! n="+i+" fitness="+this.best.fitness);
+				System.out.println("New best found! n="+cntGen+" fitness="+this.best.fitness);
 			}
-			i++;
+			cntGen++;
 		}
 	}
 	
@@ -98,6 +112,68 @@ public class ImgEvolution {
 	 * generated image is past threshold for being similar to target.
 	 */
 	public void evolveGA(){
+		// Create initial random population
+		this.population = new EvoImg[this.control.population];
+		for (int i=0; i<this.population.length; i++){
+			this.population[i] = new EvoImg(this.control);
+		}
+		// Evolution loop
+		int cntGen=0; // generation counter
+		while (this.best==null || this.best.fitness < this.control.threshold){
+			// render each image and calculate fitness
+			for (EvoImg a : this.population){
+				a.render();
+				a.compare(this.sourceImg);
+			}
+			// sort the population by fitness
+			Arrays.sort(this.population, EvoImg.FitnessComparator);
+			
+			// check if new best found
+			if( this.best==null ||
+					this.population[this.control.population-1].fitness > this.best.fitness){
+				this.best = this.population[this.control.population-1];
+				//ImgEvolution.outputImage(this.best.image, "png", new File("best"+cntGen+".png"));
+				ImgEvolution.outputImage(this.best.image, "png", new File("best.png"));
+				System.out.println("New best found! n="+cntGen+" fitness="+this.best.fitness);
+			}
+			// create next population
+			this.nextGeneration();
+			// increment generation counter
+			cntGen++;
+			/* break loop for debugging
+			if (cntGen>1000){
+				break;
+			} //*/
+		}
+	}
+	/** Helper function for evolveGA.
+	 * Computes the next generation of the population using
+	 * parameters and flags set in the EvoControl.
+	 */
+	private void nextGeneration(){
+		EvoImg[] newPop = new EvoImg[this.population.length];
+		// dumb method for testing
+		for(int i=0; i<newPop.length;){
+			// breed best and second best
+			EvoImg[] tmp = EvoImg.crossBreed(
+					this.population[this.population.length-1],
+					this.population[this.population.length-2],
+					this.control.uniformCross);
+			// mutate children
+			tmp[0].mutate(this.control);
+			tmp[1].mutate(this.control);
+			// add to population
+			if(i<newPop.length){
+				newPop[i++] = tmp[0];
+			}
+			if(i<newPop.length){
+				newPop[i++] = tmp[1];
+			}
+		}
+		this.population = newPop;
+		//*/
+		
+		
 		
 	}
 	

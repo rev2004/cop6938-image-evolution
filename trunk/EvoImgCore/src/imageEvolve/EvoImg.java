@@ -6,6 +6,7 @@ import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.WritableRaster;
+import java.util.Comparator;
 import java.util.Random;
 
 import imageEvolve.ColorPolygon;
@@ -28,7 +29,7 @@ public class EvoImg {
 	
 	/* Constructors */
 	
-	/** Default contructor - sets basic testing values into parameters.
+	/** Default constructor - sets basic testing values into parameters.
 	 * maximum image width = 100px; maximum image height = 100px; no DNA or image;
 	 */
 	public EvoImg(){
@@ -125,6 +126,14 @@ public class EvoImg {
 	public double getFitness(){
 		return this.fitness;
 	}
+	/** Comparator based on fitness.
+	 * Orders low fitness images before high fitness images
+	 */
+	public static Comparator<EvoImg> FitnessComparator = new Comparator<EvoImg>() {
+		public int compare(EvoImg a, EvoImg b){
+			return (a.fitness<b.fitness)?-1:(a.fitness==b.fitness)?0:1;
+		}
+	};
 	
 	/* Compilation */
 	
@@ -585,7 +594,7 @@ public class EvoImg {
 	 * @param uniform boolean if crossing should be uniform else single splice
 	 * @return EvoImg array contain two child EvoImg objects
 	 */
-	public EvoImg[] crossBreed(EvoImg A, EvoImg B, boolean uniform){
+	public static EvoImg[] crossBreed(EvoImg A, EvoImg B, boolean uniform){
 		// initialize children
 		EvoImg[] tmp = new EvoImg[2];
 		tmp[0] = new EvoImg(A.x_max, A.y_max, A.poly, A.vert);
@@ -623,6 +632,5 @@ public class EvoImg {
 		}
 		return tmp;
 	}
-	
 	
 }
