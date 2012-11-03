@@ -87,7 +87,7 @@ public class ImgEvolution {
 	 */
 	public void evolve(){
 		if (this.control.alg == EvoControl.Evolution.HC){
-			this.evolveGA();
+			this.evolveHC();
 		} else if (this.control.alg == EvoControl.Evolution.GA)  {
 			this.evolveGA();
 		}
