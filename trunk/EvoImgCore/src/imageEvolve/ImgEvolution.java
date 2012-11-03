@@ -25,7 +25,7 @@ import javax.imageio.ImageIO;
  * @since 2012-10-30
  * @version 0.7
  */
-public class ImgEvolution {
+public class ImgEvolution implements Runnable{
 		
 	private static final ThreadLocal<Random> rndSrc =
 			new ThreadLocal <Random> () {
@@ -51,31 +51,48 @@ public class ImgEvolution {
 	 * @param args arguments are ignored
 	 */
 	public static void main(String[] args){
-		// Make an instance
-		ImgEvolution e = new ImgEvolution();
-		// Get target image
-		e.sourceImg = ImgEvolution.getSourceImage(new File("canvas.png"));
-		// Setup evolution parameters
-		e.control.size_x = e.sourceImg.getWidth();
-		e.control.size_y = e.sourceImg.getHeight();
-		e.control.polygons = 100;
-		e.control.vertices = 3;
-		e.control.population = 40;
-		e.control.alg = Evolution.GA;
-		e.control.initColor = EvoControl.InitColor.RAND;
-		e.control.mutationMode = EvoControl.Mutation.SOFT;
-		e.control.comparison = EvoControl.CompMode.DIFF;
-		e.control.mutationChance = 0.2;
-		e.control.mutationDegree = 0.1;
-		e.control.uniformCross = true;
-		e.control.parentCutoff = 0.1;
-		e.control.killParents = true;
-		e.control.rndCutoff = false;
-		e.control.threshold = 0.985;
-		// Run evolution
-		System.out.println("Evolution Starting");
-		e.evolve();
-		System.out.println("Evolution Complete");
+		// Make an instances
+		ImgEvolution e1 = new ImgEvolution(); // HC
+		ImgEvolution e2 = new ImgEvolution(); // GA
+		// Setup HC evolution parameters
+		e1.sourceImg = ImgEvolution.getSourceImage(new File("canvas.png"));
+		e1.control.size_x = e1.sourceImg.getWidth();
+		e1.control.size_y = e1.sourceImg.getHeight();
+		e1.control.polygons = 100;
+		e1.control.vertices = 6;
+		e1.control.population = 40;
+		e1.control.alg = Evolution.HC;
+		e1.control.initColor = EvoControl.InitColor.RAND;
+		e1.control.mutationMode = EvoControl.Mutation.MEDIUM;
+		e1.control.comparison = EvoControl.CompMode.DIFF;
+		e1.control.mutationChance = 0.2;
+		e1.control.mutationDegree = 0.1;
+		e1.control.uniformCross = true;
+		e1.control.parentCutoff = 0.1;
+		e1.control.killParents = true;
+		e1.control.rndCutoff = false;
+		e1.control.threshold = 0.93;
+		// Setup GA evolution parameters
+		e2.sourceImg = ImgEvolution.getSourceImage(new File("canvas.png"));
+		e2.control.size_x = e2.sourceImg.getWidth();
+		e2.control.size_y = e2.sourceImg.getHeight();
+		e2.control.polygons = 100;
+		e2.control.vertices = 6;
+		e2.control.population = 40;
+		e2.control.alg = Evolution.GA;
+		e2.control.initColor = EvoControl.InitColor.RAND;
+		e2.control.mutationMode = EvoControl.Mutation.PROB;
+		e2.control.comparison = EvoControl.CompMode.DIFF;
+		e2.control.mutationChance = 0.2;
+		e2.control.mutationDegree = 0.1;
+		e2.control.uniformCross = true;
+		e2.control.parentCutoff = 0.1;
+		e2.control.killParents = true;
+		e2.control.rndCutoff = false;
+		e2.control.threshold = 0.93;
+		// Run evolution in parallel (drag race HC vs GA)
+		new Thread(e1).start();
+		new Thread(e2).start();
 	}
 	
 	
@@ -115,10 +132,10 @@ public class ImgEvolution {
 			// compare fitness of next against best
 			if(test.fitness > this.best.fitness){
 				this.best = test;
-				ImgEvolution.outputImage(this.best.image, "png", new File("best.png"));
-				System.out.println("New best found! n="+cntGen
-						+" fitness="+this.best.fitness
-						+" elapsedTime="+fmtTimeDiff(System.currentTimeMillis(),startTime));
+				ImgEvolution.outputImage(this.best.image, "png", new File("best_hc.png"));
+				System.out.println(" HC - new best found!\tn="+cntGen
+						+"\tfitness="+this.best.fitness
+						+"\telapsedTime="+fmtTimeDiff(System.currentTimeMillis(),startTime));
 			}
 			cntGen++;
 		}
@@ -154,10 +171,10 @@ public class ImgEvolution {
 					this.population[this.control.population-1].fitness > this.best.fitness){
 				this.best = this.population[this.control.population-1];
 				//ImgEvolution.outputImage(this.best.image, "png", new File("best"+cntGen+".png"));
-				ImgEvolution.outputImage(this.best.image, "png", new File("best.png"));
-				System.out.println("New best found! n="+cntGen
-						+" fitness="+this.best.fitness
-						+" elapsedTime="+fmtTimeDiff(System.currentTimeMillis(),startTime));
+				ImgEvolution.outputImage(this.best.image, "png", new File("best_ga.png"));
+				System.out.println("GA - new best found!\tn="+cntGen
+						+"\tfitness="+this.best.fitness
+						+"\telapsedTime="+fmtTimeDiff(System.currentTimeMillis(),startTime));
 			}
 			// create next population
 			this.nextGeneration();
@@ -224,10 +241,10 @@ public class ImgEvolution {
 		long diff = (mills2>mills1)?mills2-mills1:mills1-mills2;
 		long hrs = diff/3600000;
 		long mins = diff/60000-hrs*60;
-		double secs = diff/1000-(double)mins*60-(double)hrs*3600;
-		return String.format("02d",hrs)+":"
-				+String.format("02d",mins)+":"
-				+String.format("02.3f",secs);
+		double secs = diff/1000.0-(double)mins*60-(double)hrs*3600;
+		return String.format("%02d",hrs)+":"
+				+String.format("%02d",mins)+":"
+				+String.format("%02.3f",secs);
 	}
 	
 	/** Read an image from a file
@@ -257,6 +274,10 @@ public class ImgEvolution {
 			e.printStackTrace();
 		}
 		
+	}
+	
+	public void run() {
+		this.evolve();
 	}
 
 }
