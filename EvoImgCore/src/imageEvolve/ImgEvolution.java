@@ -1,14 +1,13 @@
 package imageEvolve;
 
 import imageEvolve.EvoImg;
-import imageEvolve.EvoControl.CompMode;
-import imageEvolve.EvoControl.InitColor;
-import imageEvolve.EvoControl.Mutation;
+import imageEvolve.EvoControl.Evolution;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Random;
 
 import javax.imageio.ImageIO;
 
@@ -30,8 +29,11 @@ import javax.imageio.ImageIO;
  */
 public class ImgEvolution {
 		
-	/* Evolution instance parameters */
-
+	private static final ThreadLocal<Random> rndSrc =
+			new ThreadLocal <Random> () {
+				@Override protected Random initialValue() { return new Random(); }
+	};
+	
 	/* Evolution instance variables */
 	EvoControl control;
 	private BufferedImage sourceImg;
@@ -61,6 +63,7 @@ public class ImgEvolution {
 		e.control.polygons = 100;
 		e.control.vertices = 6;
 		e.control.population = 40;
+		e.control.alg = Evolution.GA;
 		e.control.initColor = EvoControl.InitColor.RAND;
 		e.control.mutationMode = EvoControl.Mutation.SOFT;
 		e.control.comparison = EvoControl.CompMode.DIFF;
@@ -73,16 +76,28 @@ public class ImgEvolution {
 		e.control.threshold = 0.985;
 		// Run evolution
 		System.out.println("Evolution Starting");
-		//e.evolveHC();
-		e.evolveGA();
+		e.evolve();
 		System.out.println("Evolution Complete");
+	}
+	
+	
+	/** Generic evolution method.
+	 * Uses EvoControl to determine whether hill climber
+	 * or genetic algorithm solution should be used. 
+	 */
+	public void evolve(){
+		if (this.control.alg == EvoControl.Evolution.HC){
+			this.evolveGA();
+		} else if (this.control.alg == EvoControl.Evolution.GA)  {
+			this.evolveGA();
+		}
 	}
 	
 	/** Hill Climbing image evolution solution.
 	 * Performs evolution of an initial random image until it is
 	 * generated image is past threshold for being similar to target.
 	 */
-	public void evolveHC(){
+	private void evolveHC(){
 		// Create initial random dna
 		this.best = new EvoImg(this.control);
 		this.best.render();
@@ -111,7 +126,7 @@ public class ImgEvolution {
 	 * Performs evolution of an initial random image until it is
 	 * generated image is past threshold for being similar to target.
 	 */
-	public void evolveGA(){
+	private void evolveGA(){
 		// Create initial random population
 		this.population = new EvoImg[this.control.population];
 		for (int i=0; i<this.population.length; i++){
@@ -122,8 +137,10 @@ public class ImgEvolution {
 		while (this.best==null || this.best.fitness < this.control.threshold){
 			// render each image and calculate fitness
 			for (EvoImg a : this.population){
-				a.render();
-				a.compare(this.sourceImg);
+				if(a.image==null){
+					a.render();
+					a.compare(this.sourceImg);
+				}
 			}
 			// sort the population by fitness
 			Arrays.sort(this.population, EvoImg.FitnessComparator);
@@ -151,30 +168,48 @@ public class ImgEvolution {
 	 * parameters and flags set in the EvoControl.
 	 */
 	private void nextGeneration(){
+		// initializing
 		EvoImg[] newPop = new EvoImg[this.population.length];
-		// dumb method for testing
-		for(int i=0; i<newPop.length;){
-			// breed best and second best
+		int newPopPtr=0;
+		// find section of fit parents
+		int parentRange;
+		if(this.control.rndCutoff){
+			parentRange = this.population.length;
+		} else {
+			parentRange = (int)(this.population.length*this.control.parentCutoff);
+		}
+		
+		// if not killing parents put into new population
+		if (!this.control.killParents){
+			int parentCutIndex = this.population.length-(int)(this.population.length*this.control.parentCutoff);
+			for (int i=parentCutIndex; i<this.population.length; i++){
+				newPop[newPopPtr++] = this.population[i];
+			}
+		}
+		
+		// Breed randomly selected parents to fill out rest of population
+		while(newPopPtr<newPop.length){
+			// randomly select parents from in range
+			// using gaussian distribution to give higher fitness
+			// parents priority
 			EvoImg[] tmp = EvoImg.crossBreed(
-					this.population[this.population.length-1],
-					this.population[this.population.length-2],
+					this.population[this.population.length-(int)Math.abs(rndSrc.get().nextGaussian()*parentRange)],
+					this.population[this.population.length-(int)Math.abs(rndSrc.get().nextGaussian()*parentRange)],
 					this.control.uniformCross);
 			// mutate children
 			tmp[0].mutate(this.control);
 			tmp[1].mutate(this.control);
 			// add to population
-			if(i<newPop.length){
-				newPop[i++] = tmp[0];
+			if(newPopPtr<newPop.length){
+				newPop[newPopPtr++] = tmp[0];
 			}
-			if(i<newPop.length){
-				newPop[i++] = tmp[1];
+			if(newPopPtr<newPop.length){
+				newPop[newPopPtr++] = tmp[1];
 			}
 		}
+		// set population to be the new population
 		this.population = newPop;
-		//*/
-		
-		
-		
+
 	}
 	
 	

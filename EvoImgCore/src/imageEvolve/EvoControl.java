@@ -9,6 +9,11 @@ package imageEvolve;
 public class EvoControl {
 	
 	/* Evolution parameter enumerations */
+	/** Evolution algorithm enumeration.
+	 * <br>HC - uses Hill Climber algorithm for evolution.
+	 * <br>GA - uses Genetic Algorithm for evolution.
+	 */
+	public enum Evolution { HC, GA }
 	/** Mutation algorithm enumeration.
 	 * <br>GAUSS - uses Gaussian distribution to limit degree of mutation on single parameter at once.
 	 * <br>SOFT - uses a percentage range to limit degree of mutation on single parameter at once.
@@ -36,6 +41,7 @@ public class EvoControl {
 	public int polygons; // Number of polygons
 	public int vertices; // Number of points in each polygon
 	public int population; // Number of candidates in each population.
+	public Evolution alg; // Evolution algorithm to be used.
 	public InitColor initColor; // Polygon initial color
 	public Mutation mutationMode; // Mutation algorithm
 	public CompMode comparison; // Method of comparison for fitness
@@ -56,6 +62,7 @@ public class EvoControl {
 		polygons = 0;
 		vertices = 0;
 		population = 0;
+		alg = Evolution.HC;
 		initColor = InitColor.RAND;
 		mutationMode = Mutation.MEDIUM;
 		comparison = CompMode.DIFF;
