@@ -269,7 +269,8 @@ public class ImgEvolution implements Runnable{
 				this.log.write(this.name+" - new best found!"
 						+"\tn="+gen
 						+"\tfitness="+this.best.fitness
-						+"\telapsedTime="+fmtTimeDiff(System.currentTimeMillis(),startTime));
+						+"\telapsedTime="+fmtTimeDiff(System.currentTimeMillis(),startTime)
+						+"\n");
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -326,7 +327,7 @@ public class ImgEvolution implements Runnable{
 		// start log output
 		if (this.log!=null){
 			try {
-				this.log.write("Evolution Starting - "+this.name);
+				this.log.write("Evolution Starting - "+this.name+"\n");
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -335,7 +336,7 @@ public class ImgEvolution implements Runnable{
 		// finalize log output
 		if (this.log!=null){
 			try {
-				this.log.write("Evolution Complete - "+this.name);
+				this.log.write("Evolution Complete - "+this.name+"\n");
 				this.log.close();
 			} catch (IOException e) {
 				e.printStackTrace();
