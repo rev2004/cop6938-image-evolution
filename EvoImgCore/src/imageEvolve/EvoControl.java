@@ -35,14 +35,15 @@ public class EvoControl {
 	public int size_y; // Height of image
 	public int polygons; // Number of polygons
 	public int vertices; // Number of points in each polygon
+	public int population; // Number of candidates in each population.
 	public InitColor initColor; // Polygon initial color
 	public Mutation mutationMode; // Mutation algorithm
 	public CompMode comparison; // Method of comparison for fitness
 	public double mutationChance; // Chance mutation will occur
 	public double mutationDegree; // Amount of mutation
-	public boolean killParents; // Flag to remove parents from next generation
 	public boolean uniformCross; // Flag if uniform crossover to be made (otherwise random one-splice)
 	public double parentCutoff; // Percentage of parents selected
+	public boolean killParents; // Flag to remove parents from next generation
 	public boolean rndCutoff; // Flag if parent selection should be weighted random (otherwise top X%)
 	public double threshold; // Percentage fitness at which evolution can end
 	
@@ -54,14 +55,15 @@ public class EvoControl {
 		size_y = 0;
 		polygons = 0;
 		vertices = 0;
+		population = 0;
 		initColor = InitColor.RAND;
 		mutationMode = Mutation.MEDIUM;
 		comparison = CompMode.DIFF;
 		mutationChance = 0.0;
 		mutationDegree = 0.0;
-		killParents = false;
 		uniformCross = false;
 		parentCutoff = 0.0;
+		killParents = false;
 		rndCutoff = false;
 		threshold = 0.0;
 	}
