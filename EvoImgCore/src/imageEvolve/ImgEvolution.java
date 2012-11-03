@@ -119,7 +119,6 @@ public class ImgEvolution implements Runnable{
 		this.best = new EvoImg(this.control);
 		this.best.render();
 		this.best.compare(this.sourceImg);
-		ImgEvolution.outputImage(this.best.image, "png", new File("best0.png"));
 		// evolution loop
 		int cntGen=0; // generation counter
 		EvoImg test;
