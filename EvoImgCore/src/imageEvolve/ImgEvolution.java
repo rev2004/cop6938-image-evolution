@@ -4,7 +4,9 @@ import imageEvolve.EvoImg;
 import imageEvolve.EvoControl.Evolution;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Writer;
 import java.util.Arrays;
 import java.util.Random;
 import javax.imageio.ImageIO;
@@ -26,34 +28,64 @@ import javax.imageio.ImageIO;
  * @version 0.7
  */
 public class ImgEvolution implements Runnable{
-		
+	
+	/* Source of randomness.
+	 * ThreadLocal used to avoid blocking when used by
+	 * concurrent threads
+	 */
 	private static final ThreadLocal<Random> rndSrc =
 			new ThreadLocal <Random> () {
 				@Override protected Random initialValue() { return new Random(); }
 	};
 	
 	/* Evolution instance variables */
+	String name;
 	EvoControl control;
 	private BufferedImage sourceImg;
 	private EvoImg best;
 	private EvoImg[] population;
+	private File outImg;
+	private Writer log;
 	
-	
+	/* Constructors */
 	/** Default constructor
 	 */
 	public ImgEvolution(){
+		this.name = this.toString();
 		this.control = new EvoControl();
 		this.best = null;
 		this.population = null;
+		this.outImg = null;
+		this.log = null;
 	}
+	/** Constructor - sets name
+	 * @param nm String value to set as name
+	 */
+	public ImgEvolution(String nm){
+		this.name = nm;
+		this.control = new EvoControl();
+		this.best = null;
+		this.population = null;
+		this.outImg = null;
+		this.log = null;
+	}
+	
 	
 	/** Driver for starting up a single instance of image evolution.
 	 * @param args arguments are ignored
 	 */
 	public static void main(String[] args){
 		// Make an instances
-		ImgEvolution e1 = new ImgEvolution(); // HC
-		ImgEvolution e2 = new ImgEvolution(); // GA
+		ImgEvolution e1 = new ImgEvolution("HC"); // HC
+		ImgEvolution e2 = new ImgEvolution("GA"); // GA
+		try {
+			e1.outImg = new File("best_hc.png");
+			e2.outImg = new File("best_ga.png");
+			e1.log = new FileWriter(new File("hc_log.txt").getAbsoluteFile());
+			e2.log = new FileWriter(new File("ga_log.txt").getAbsoluteFile());
+		} catch (IOException exception) {
+			exception.printStackTrace();
+		}
 		// Setup HC evolution parameters
 		e1.sourceImg = ImgEvolution.getSourceImage(new File("canvas.png"));
 		e1.control.size_x = e1.sourceImg.getWidth();
@@ -96,6 +128,7 @@ public class ImgEvolution implements Runnable{
 	}
 	
 	
+	/* Evolution methods */
 	/** Generic evolution method.
 	 * Uses EvoControl to determine whether hill climber
 	 * or genetic algorithm solution should be used. 
@@ -107,7 +140,6 @@ public class ImgEvolution implements Runnable{
 			this.evolveGA();
 		}
 	}
-	
 	/** Hill Climbing image evolution solution.
 	 * Performs evolution of an initial random image until it is
 	 * generated image is past threshold for being similar to target.
@@ -131,15 +163,11 @@ public class ImgEvolution implements Runnable{
 			// compare fitness of next against best
 			if(test.fitness > this.best.fitness){
 				this.best = test;
-				ImgEvolution.outputImage(this.best.image, "png", new File("best_hc.png"));
-				System.out.println(" HC - new best found!\tn="+cntGen
-						+"\tfitness="+this.best.fitness
-						+"\telapsedTime="+fmtTimeDiff(System.currentTimeMillis(),startTime));
+				evolveOutput(startTime, cntGen);
 			}
 			cntGen++;
 		}
 	}
-	
 	/** Genetic Algorithm image evolution solution.
 	 * Performs evolution of an initial random image until it is
 	 * generated image is past threshold for being similar to target.
@@ -169,11 +197,7 @@ public class ImgEvolution implements Runnable{
 			if( this.best==null ||
 					this.population[this.control.population-1].fitness > this.best.fitness){
 				this.best = this.population[this.control.population-1];
-				//ImgEvolution.outputImage(this.best.image, "png", new File("best"+cntGen+".png"));
-				ImgEvolution.outputImage(this.best.image, "png", new File("best_ga.png"));
-				System.out.println("GA - new best found!\tn="+cntGen
-						+"\tfitness="+this.best.fitness
-						+"\telapsedTime="+fmtTimeDiff(System.currentTimeMillis(),startTime));
+				evolveOutput(startTime, cntGen);
 			}
 			// create next population
 			this.nextGeneration();
@@ -227,9 +251,30 @@ public class ImgEvolution implements Runnable{
 		}
 		// set population to be the new population
 		this.population = newPop;
-
 	}
 	
+	/* Input-Output methods */
+	/** Helper function for outputting when new best found
+	 * @param startTime start time of evolution in milliseconds (i.e. System.currentTimeMillis())
+	 * @param gen current generation count
+	 */
+	private void evolveOutput(long startTime, long gen){
+		// attempt to output current best image
+		if(this.outImg!=null && this.best!=null && this.best.image!=null){
+			ImgEvolution.outputImage(this.best.image, "png", this.outImg);
+		}
+		// attempt to append log
+		if (this.log!=null){
+			try {
+				this.log.write(this.name+" - new best found!"
+						+"\tn="+gen
+						+"\tfitness="+this.best.fitness
+						+"\telapsedTime="+fmtTimeDiff(System.currentTimeMillis(),startTime));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
 	/** Method for showing time difference in human-readable format.
 	 * Best used with System.currentTimeMillis().
 	 * @param mills1 long start time
@@ -245,7 +290,6 @@ public class ImgEvolution implements Runnable{
 				+String.format("%02d",mins)+":"
 				+String.format("%02.3f",secs);
 	}
-	
 	/** Read an image from a file
 	 * @param image File to be 
 	 * @return
@@ -259,7 +303,6 @@ public class ImgEvolution implements Runnable{
 		}
 		return tmp;
 	}
-	
 	/** Output an image to file
 	 * @param img BufferedImage to write to file
 	 * @param fmt String file format (e.g. "png" or "jpeg")
@@ -275,8 +318,29 @@ public class ImgEvolution implements Runnable{
 		
 	}
 	
+	/* Runnable implementation */
+	/** implementation of Runnable.
+	 * runs the evolve() method with current control parameters
+	 */
 	public void run() {
+		// start log output
+		if (this.log!=null){
+			try {
+				this.log.write("Evolution Starting - "+this.name);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 		this.evolve();
+		// finalize log output
+		if (this.log!=null){
+			try {
+				this.log.write("Evolution Complete - "+this.name);
+				this.log.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
 }
