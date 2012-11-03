@@ -15,11 +15,17 @@ import imageEvolve.ColorPolygon;
  *  
  */
 public class EvoImg {
-	/* Static variables */
+	
+	/* Source of randomness.
+	 * ThreadLocal used to avoid blocking when used by
+	 * concurrent threads
+	 */
 	private static final ThreadLocal<Random> rndSrc =
 			new ThreadLocal <Random> () {
 				@Override protected Random initialValue() { return new Random(); }
 	};
+	
+	/* Static variables */
 	
 	/* Instance variables */
 	int x_max, y_max, poly, vert;
@@ -123,6 +129,9 @@ public class EvoImg {
 		WritableRaster raster = this.image.copyData(null);
 		return new BufferedImage(cm, raster, cm.isAlphaPremultiplied(), null);
 	}
+	/** get current fitness
+	 * @return current fitness
+	 */
 	public double getFitness(){
 		return this.fitness;
 	}
