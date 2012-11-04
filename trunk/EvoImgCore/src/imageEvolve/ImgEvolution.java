@@ -154,7 +154,9 @@ public class ImgEvolution implements Runnable{
 		// evolution loop
 		int cntGen=0; // generation counter
 		EvoImg test;
-		while (this.best.fitness < this.control.threshold){
+		while (this.best==null 
+				|| this.best.fitness < this.control.threshold
+				|| (this.control.maxGenerations>0 && this.control.maxGenerations>=cntGen)){
 			// copy and mutate current best
 			test = this.best.copyDna();
 			test.mutate(this.control);
@@ -182,7 +184,9 @@ public class ImgEvolution implements Runnable{
 		}
 		// evolution loop
 		int cntGen=0; // generation counter
-		while (this.best==null || this.best.fitness < this.control.threshold){
+		while (this.best==null 
+				|| this.best.fitness < this.control.threshold
+				|| (this.control.maxGenerations>0 && this.control.maxGenerations>=cntGen)){
 			// render each image and calculate fitness
 			for (EvoImg a : this.population){
 				if(a.image==null){
