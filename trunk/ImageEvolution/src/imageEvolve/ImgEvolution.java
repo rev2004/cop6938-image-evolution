@@ -146,7 +146,7 @@ public class ImgEvolution implements Runnable{
 	 */
 	private void evolveHC(){
 		// get start time
-		long startTime = System.currentTimeMillis();
+		//long startTime = System.currentTimeMillis();
 		// create initial random dna
 		this.best = new EvoImg(this.control);
 		this.best.render();
@@ -165,7 +165,7 @@ public class ImgEvolution implements Runnable{
 			// compare fitness of next against best
 			if(test.fitness > this.best.fitness){
 				this.best = test;
-				evolveOutput(startTime, cntGen);
+				//evolveOutput(startTime, cntGen);
 			}
 			cntGen++;
 		}
@@ -176,7 +176,7 @@ public class ImgEvolution implements Runnable{
 	 */
 	private void evolveGA(){
 		// get start time
-		long startTime = System.currentTimeMillis();
+		//long startTime = System.currentTimeMillis();
 		// create initial random population
 		this.population = new EvoImg[this.control.population];
 		for (int i=0; i<this.population.length; i++){
@@ -201,7 +201,7 @@ public class ImgEvolution implements Runnable{
 			if( this.best==null ||
 					this.population[this.control.population-1].fitness > this.best.fitness){
 				this.best = this.population[this.control.population-1];
-				evolveOutput(startTime, cntGen);
+				//evolveOutput(startTime, cntGen);
 			}
 			// create next population
 			this.nextGeneration();
@@ -258,10 +258,12 @@ public class ImgEvolution implements Runnable{
 	}
 	
 	/* Input-Output methods */
+	
 	/** Helper function for outputting when new best found
 	 * @param startTime start time of evolution in milliseconds (i.e. System.currentTimeMillis())
 	 * @param gen current generation count
 	 */
+	@SuppressWarnings("unused")
 	private void evolveOutput(long startTime, long gen){
 		// attempt to output current best image
 		if(this.outImg!=null && this.best!=null && this.best.image!=null){
