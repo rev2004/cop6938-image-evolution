@@ -21,11 +21,10 @@ import org.openid4java.message.ax.FetchResponse;
 
 
 
-
 /**
  * Servlet implementation class OpenIdLoginServlet
  */
-public class OpenIdLoginServlet extends HttpServlet {
+public class LoginServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
     
 	final static String YAHOO_ENDPOINT = "https://me.yahoo.com";
@@ -37,7 +36,7 @@ public class OpenIdLoginServlet extends HttpServlet {
     /**
      * @see HttpServlet#HttpServlet()
      */
-    public OpenIdLoginServlet() {
+    public LoginServlet() {
         super();
         // instantiate a ConsumerManager object
         manager = new ConsumerManager();
@@ -64,38 +63,38 @@ public class OpenIdLoginServlet extends HttpServlet {
 			// configure the return_to URL where your application will receive
 			// the authentication responses from the OpenID provider
 			String returnToUrl = "http://localhost:8080/ImageEvolution/";
-
+			
 			/* --- Forward proxy setup (only if needed) ---
 			ProxyProperties proxyProps = new ProxyProperties();
 			proxyProps.setProxyName("proxy.example.com");
 			proxyProps.setProxyPort(8080);
 			HttpClientFactory.setProxyProperties(proxyProps);
 			//*/
-
+			
 			// perform discovery on the user-supplied identifier
 			@SuppressWarnings("rawtypes")
 			List discoveries = manager.discover(userSuppliedString);
-
+			
 			// attempt to associate with the OpenID provider
 			// and retrieve one service endpoint for authentication
 			DiscoveryInformation discovered = manager.associate(discoveries);
-
+			
 			// store the discovery information in the user's session
 			httpReq.getSession().setAttribute("openid-disc", discovered);
-
+			
 			// obtain a AuthRequest message to be sent to the OpenID provider
 			AuthRequest authReq = manager.authenticate(discovered, returnToUrl);
-
+			
 			// Attribute Exchange example: fetching the 'email' attribute
 			FetchRequest fetch = FetchRequest.createFetchRequest();
 			//fetch.addAttribute("email", "http://schema.openid.net/contact/email", true);
 			fetch.addAttribute("email", "http://axschema.org/contact/email", true);
 		    fetch.addAttribute("firstName", "http://axschema.org/namePerson/first", true);
 		    fetch.addAttribute("lastName", "http://axschema.org/namePerson/last", true);
-
+		    
 			// attach the extension to the authentication request
 			authReq.addExtension(fetch);
-
+			
 			if (! discovered.isVersion2() ) {
 				// Option 1: GET HTTP-redirect to the OpenID Provider endpoint
 				// The only method supported in OpenID 1.x
@@ -104,7 +103,7 @@ public class OpenIdLoginServlet extends HttpServlet {
 				return null;
 			} else {
 				// Option 2: HTML FORM Redirection (Allows payloads >2048 bytes)
-
+				
 				RequestDispatcher dispatcher =
 						getServletContext().getRequestDispatcher("formredirection.jsp");
 				httpReq.setAttribute("parameterMap", authReq.getParameterMap());
@@ -117,57 +116,56 @@ public class OpenIdLoginServlet extends HttpServlet {
 			// present error to the user
 			e.printStackTrace();
 		}
-
+		
 		return null;
 	}
-
+	
 	// --- processing the authentication response ---
-	public Identifier verifyResponse(HttpServletRequest httpReq) {
-		try {
-			// extract the parameters from the authentication response
-			// (which comes in as a HTTP request from the OpenID provider)
-			ParameterList response =
-					new ParameterList(httpReq.getParameterMap());
-
-			// retrieve the previously stored discovery information
-			DiscoveryInformation discovered = (DiscoveryInformation)
-					httpReq.getSession().getAttribute("openid-disc");
-
-			// extract the receiving URL from the HTTP request
-			StringBuffer receivingURL = httpReq.getRequestURL();
-			String queryString = httpReq.getQueryString();
-			if (queryString != null && queryString.length() > 0){
-				receivingURL.append("?").append(httpReq.getQueryString());
-			}
-			// verify the response; ConsumerManager needs to be the same
-			// (static) instance used to place the authentication request
-			VerificationResult verification = manager.verify(
-					receivingURL.toString(),
-					response, discovered);
-			
-			// examine the verification result and extract the verified identifier
-			Identifier verified = verification.getVerifiedId();
-			if (verified != null){
-				AuthSuccess authSuccess =
-						(AuthSuccess) verification.getAuthResponse();
-
-				if (authSuccess.hasExtension(AxMessage.OPENID_NS_AX)){
-					FetchResponse fetchResp = (FetchResponse) authSuccess
-							.getExtension(AxMessage.OPENID_NS_AX);
-
-					@SuppressWarnings("rawtypes")
-					List emails = fetchResp.getAttributeValues("email");
-					@SuppressWarnings("unused")
-					String email = (String) emails.get(0);
+		public Identifier verifyResponse(HttpServletRequest httpReq) {
+			try {
+				// extract the parameters from the authentication response
+				// (which comes in as a HTTP request from the OpenID provider)
+				ParameterList response =
+						new ParameterList(httpReq.getParameterMap());
+				
+				// retrieve the previously stored discovery information
+				DiscoveryInformation discovered = (DiscoveryInformation)
+						httpReq.getSession().getAttribute("openid-disc");
+				
+				// extract the receiving URL from the HTTP request
+				StringBuffer receivingURL = httpReq.getRequestURL();
+				String queryString = httpReq.getQueryString();
+				if (queryString != null && queryString.length() > 0){
+					receivingURL.append("?").append(httpReq.getQueryString());
 				}
+				// verify the response; ConsumerManager needs to be the same
+				// (static) instance used to place the authentication request
+				VerificationResult verification = manager.verify(
+						receivingURL.toString(),
+						response, discovered);
+				
+				// examine the verification result and extract the verified identifier
+				Identifier verified = verification.getVerifiedId();
+				if (verified != null){
+					AuthSuccess authSuccess =
+							(AuthSuccess) verification.getAuthResponse();
+					
+					if (authSuccess.hasExtension(AxMessage.OPENID_NS_AX)){
+						FetchResponse fetchResp = (FetchResponse) authSuccess
+								.getExtension(AxMessage.OPENID_NS_AX);
 
-				return verified;  // success
+						@SuppressWarnings("rawtypes")
+						List emails = fetchResp.getAttributeValues("email");
+						@SuppressWarnings("unused")
+						String email = (String) emails.get(0);
+					}
+					
+					return verified;  // success
+				}
+			} catch (OpenIDException e){
+				// present error to the user
 			}
-		} catch (OpenIDException e){
-			// present error to the user
+			
+			return null;
 		}
-
-		return null;
-	}
-
 }

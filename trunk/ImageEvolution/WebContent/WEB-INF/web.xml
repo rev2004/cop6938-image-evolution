@@ -11,12 +11,13 @@
   </welcome-file-list>
   <servlet>
     <description></description>
-    <display-name>OpenIdLoginServlet</display-name>
-    <servlet-name>OpenIdLoginServlet</servlet-name>
-    <servlet-class>OpenIdLoginServlet</servlet-class>
+    <display-name>loginServlet</display-name>
+    <servlet-name>loginServlet</servlet-name>
+    <servlet-class>LoginServlet</servlet-class>
   </servlet>
   <servlet-mapping>
-    <servlet-name>OpenIdLoginServlet</servlet-name>
-    <url-pattern>/OpenIdLoginServlet</url-pattern>
+    <servlet-name>loginServlet</servlet-name>
+    <url-pattern>/loginServlet</url-pattern>
   </servlet-mapping>
+
 </web-app>
