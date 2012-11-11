@@ -9,4 +9,14 @@
     <welcome-file>default.htm</welcome-file>
     <welcome-file>default.jsp</welcome-file>
   </welcome-file-list>
+  <servlet>
+    <description></description>
+    <display-name>OpenIdLoginServlet</display-name>
+    <servlet-name>OpenIdLoginServlet</servlet-name>
+    <servlet-class>OpenIdLoginServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>OpenIdLoginServlet</servlet-name>
+    <url-pattern>/OpenIdLoginServlet</url-pattern>
+  </servlet-mapping>
 </web-app>

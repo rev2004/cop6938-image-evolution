@@ -1,4 +1,4 @@
-<%@ page language="java" contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
+<%@ page language="java" session="true" contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
 <%@ page import="com.amazonaws.*" %>
 <%@ page import="com.amazonaws.auth.*" %>
 <%@ page import="com.amazonaws.services.ec2.*" %>
@@ -47,6 +47,10 @@
     <link rel="stylesheet" href="styles/styles.css" type="text/css" media="screen">
 </head>
 <body>
+	<div id="page intro">
+		hello session=<% request.getAttribute("name");%>
+	</div>
+	
     <div id="content" class="container">
         <div class="section grid grid5 s3">
             <h2>Amazon S3 Buckets:</h2>
