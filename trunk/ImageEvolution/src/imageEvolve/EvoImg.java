@@ -12,7 +12,7 @@ import java.util.Random;
 import imageEvolve.ColorPolygon;
 
 /** Class representing a evolved image
- *  
+ *      
  */
 public class EvoImg {
 	
