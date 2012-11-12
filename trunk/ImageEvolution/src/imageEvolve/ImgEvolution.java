@@ -15,7 +15,7 @@ import javax.imageio.ImageIO;
  *  <br>This class was designed for for use in a cloud-based web application, for novelty 
  *  and as an experiment in building scalable cloud-based applications. Depending on the
  *  evolution method used, this program will either run a hill climbing algorithm or 
- *  a proper genetic algorithm.
+ *  a proper genetic algorithm. 
  *  
  *  <br>Original concept and some implementation ideas taken from Roger Alsing's Evolving Mona Lisa
  *  project. Other ideas and implementation reference provided by AlteredQualia and Nihilogic.

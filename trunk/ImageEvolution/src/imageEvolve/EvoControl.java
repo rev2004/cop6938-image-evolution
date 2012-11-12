@@ -5,8 +5,8 @@ package imageEvolve;
  * specification of which algorithms to use for fitness, mutation and breeding,
  * parameters to control mutation effects and the threshold of required fitness
  * for the algorithm to complete.
- */
-public class EvoControl {
+ */ 
+public class EvoControl { 
 	
 	/* Evolution parameter enumerations */
 	/** Evolution algorithm enumeration.
