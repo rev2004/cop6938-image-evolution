@@ -10,6 +10,7 @@ import java.util.Comparator;
 import java.util.Random;
 
 import imageEvolveCore.ColorPolygon;
+import imageEvolveCore.EvoControl;
 
 /** Class representing a evolved image
  *  
