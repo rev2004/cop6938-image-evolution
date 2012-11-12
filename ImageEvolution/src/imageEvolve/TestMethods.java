@@ -3,7 +3,7 @@ package imageEvolve;
 /** Class for warehousing old test methods from ImgEvolution.
  * unit tests early versions of application parts.
  */
-public class TestMethods {
+public class TestMethods { 
 	
 	public static void main(String[] args){
 		//renderTest();
