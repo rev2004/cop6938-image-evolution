@@ -4,9 +4,10 @@
 <html>
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-		<title>Login page jkwecjdsc</title>
+		<title>Login page</title>
 	</head>
 	<body>
+		<div>session id: <%= session.getId() %></div>
 		<div style="margin-left: 50px; margin-top: 40px; height: 60px;">
 			<form action="loginServlet?identifier=https://www.google.com/accounts/o8/id" method="post"> 
 				<input type="image" src="images/openid-logos-google.png" value=" " />

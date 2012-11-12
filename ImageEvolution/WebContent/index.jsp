@@ -47,6 +47,7 @@
     <link rel="stylesheet" href="styles/styles.css" type="text/css" media="screen">
 </head>
 <body>
+	<div>session id: <%= session.getId() %></div>
 	<div id="page intro">
 		hello session=<% request.getAttribute("name");%>
 	</div>
