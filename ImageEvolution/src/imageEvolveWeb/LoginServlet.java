@@ -1,5 +1,6 @@
 package imageEvolveWeb;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.List;
 
 import javax.servlet.ServletConfig;
@@ -60,9 +61,17 @@ public class LoginServlet extends HttpServlet {
 		// if openid login succeded redirect to home page using our demo account
 		//if your site is open to anyone without login you can do the redirect directly
 		if (identifier != null) {
-			System.out.println("login with openid succeed");
+			response.setContentType("text/html");
+			PrintWriter out = response.getWriter();
+			out.print("<html><body>This is supposed to do something with cookies and stuff");
+			out.print("<br/><strong>BUT</strong><br/>");
+			out.print("<img src=\"http://i0.kym-cdn.com/photos/images/original/000/234/765/b7e.jpg\"/>");
+			out.print("</body></html>");
 		} else {
-			System.out.println("login with openid failed");
+			response.setContentType("text/html");
+			PrintWriter out = response.getWriter();
+			out.println("sorry, your authentication could not be processed.");
+			out.println("You might have discovered a bug. Please contact the site administrator.");
 		}
 		
 	}
