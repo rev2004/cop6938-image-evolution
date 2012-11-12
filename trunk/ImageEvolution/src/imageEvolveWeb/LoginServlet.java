@@ -2,9 +2,7 @@ package imageEvolveWeb;
 import java.io.IOException;
 import java.util.List;
 
-import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletConfig;
-import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -13,7 +11,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.openid4java.OpenIDException;
-import org.openid4java.consumer.ConsumerException;
 import org.openid4java.consumer.ConsumerManager;
 import org.openid4java.consumer.VerificationResult;
 import org.openid4java.discovery.DiscoveryInformation;
@@ -35,7 +32,7 @@ public class LoginServlet extends HttpServlet {
     
 	final static String YAHOO_ENDPOINT = "https://me.yahoo.com";
 	final static String GOOGLE_ENDPOINT = "https://www.google.com/accounts/o8/id";
-	private ServletContext context;
+	//private ServletContext context;
 	public ConsumerManager manager;
 	
 	// configure the return_to URL where your application will receive
@@ -43,12 +40,11 @@ public class LoginServlet extends HttpServlet {
 	public final String returnToUrl = "http://localhost:8080/ImageEvolution/loginServlet";
 	
 	
-	private final Log log = LogFactory.getLog(this.getClass());
 	
 	
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
-		context = config.getServletContext();
+		//context = config.getServletContext();
 		try {
 			this.manager = new ConsumerManager();
 		} catch (Exception e) {
@@ -60,9 +56,9 @@ public class LoginServlet extends HttpServlet {
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		log.debug("LoginServlet.doGet(...)");
+		System.out.println("LoginServlet.doGet(...)");
 		Identifier identifier = this.verifyResponse(request);
-		log.debug("identifier: " + identifier);
+		System.out.println("identifier: " + identifier);
 		// if openid login succeded redirect to home page using our demo account
 		//if your site is open to anyone without login you can do the redirect directly
 		if (identifier != null) {
@@ -128,7 +124,12 @@ public class LoginServlet extends HttpServlet {
 			}
 			// attach the extension to the authentication request
 			authReq.addExtension(fetch);
+			// start redirect
+			httpResp.sendRedirect(authReq.getDestinationUrl(true));
+			return null;
 			
+			
+			/* This is a bit to fancy... not sure how it is supposed to work, hopefully no payloads > 2048B
 			if (! discovered.isVersion2() ) {
 				// Option 1: GET HTTP-redirect to the OpenID Provider endpoint
 				// The only method supported in OpenID 1.x
@@ -143,12 +144,11 @@ public class LoginServlet extends HttpServlet {
 				httpReq.setAttribute("parameterMap", authReq.getParameterMap());
 				httpReq.setAttribute("destinationUrl", authReq.getDestinationUrl(false));
 				dispatcher.forward(httpReq, httpResp);
-			}
+			}//*/
+			
+			
 		} catch (OpenIDException e) {
 			// present error to the user
-		} catch (ServletException e) {
-			// present error to the user
-			e.printStackTrace();
 		}
 		
 		return null;
