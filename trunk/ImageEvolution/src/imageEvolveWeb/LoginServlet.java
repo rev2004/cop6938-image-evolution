@@ -3,12 +3,17 @@ import java.io.IOException;
 import java.util.List;
 
 import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.openid4java.OpenIDException;
+import org.openid4java.consumer.ConsumerException;
 import org.openid4java.consumer.ConsumerManager;
 import org.openid4java.consumer.VerificationResult;
 import org.openid4java.discovery.DiscoveryInformation;
@@ -30,41 +35,57 @@ public class LoginServlet extends HttpServlet {
     
 	final static String YAHOO_ENDPOINT = "https://me.yahoo.com";
 	final static String GOOGLE_ENDPOINT = "https://www.google.com/accounts/o8/id";
-
+	private ServletContext context;
 	public ConsumerManager manager;
 	
+	// configure the return_to URL where your application will receive
+	// the authentication responses from the OpenID provider
+	public final String returnToUrl = "http://localhost:8080/ImageEvolution/loginServlet";
 	
-    /**
-     * @see HttpServlet#HttpServlet()
-     */
-    public LoginServlet() {
-        super();
-        // instantiate a ConsumerManager object
-        manager = new ConsumerManager();
-    }
+	
+	private final Log log = LogFactory.getLog(this.getClass());
+	
+	
+	public void init(ServletConfig config) throws ServletException {
+		super.init(config);
+		context = config.getServletContext();
+		try {
+			this.manager = new ConsumerManager();
+		} catch (Exception e) {
+			throw new ServletException(e);
+		}
+	}
 
 	/**
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		log.debug("LoginServlet.doGet(...)");
+		Identifier identifier = this.verifyResponse(request);
+		log.debug("identifier: " + identifier);
+		// if openid login succeded redirect to home page using our demo account
+		//if your site is open to anyone without login you can do the redirect directly
+		if (identifier != null) {
+			System.out.println("login with openid succeed");
+		} else {
+			System.out.println("login with openid failed");
+		}
 		
 	}
 
-	/**
+	/** Post service used to initiate an OpenId authentication
+	 * Sends the request to the identifier specified in the identifier parameter.
 	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		
+		String identifier = request.getParameter("identifier");
+		this.authRequest(identifier, request, response);
 	}
 	
 	
 	// --- placing the authentication request ---
 	public String authRequest(String userSuppliedString, HttpServletRequest httpReq, HttpServletResponse httpResp) throws IOException {
 		try {
-			// configure the return_to URL where your application will receive
-			// the authentication responses from the OpenID provider
-			String returnToUrl = "http://localhost:8080/ImageEvolution/";
-			
 			/* --- Forward proxy setup (only if needed) ---
 			ProxyProperties proxyProps = new ProxyProperties();
 			proxyProps.setProxyName("proxy.example.com");
@@ -88,11 +109,23 @@ public class LoginServlet extends HttpServlet {
 			
 			// Attribute Exchange example: fetching the 'email' attribute
 			FetchRequest fetch = FetchRequest.createFetchRequest();
-			//fetch.addAttribute("email", "http://schema.openid.net/contact/email", true);
-			fetch.addAttribute("email", "http://axschema.org/contact/email", true);
-		    fetch.addAttribute("firstName", "http://axschema.org/namePerson/first", true);
-		    fetch.addAttribute("lastName", "http://axschema.org/namePerson/last", true);
-		    
+			// Specialized request for google
+			if(userSuppliedString.startsWith(GOOGLE_ENDPOINT)){
+				//fetch.addAttribute("email", "http://schema.openid.net/contact/email", true);
+				fetch.addAttribute("email", "http://axschema.org/contact/email", true);
+		    	fetch.addAttribute("firstName", "http://axschema.org/namePerson/first", true);
+		    	fetch.addAttribute("lastName", "http://axschema.org/namePerson/last", true);
+			} 
+			// Specialized request for yahoo
+			else if (userSuppliedString.startsWith(YAHOO_ENDPOINT)){
+				fetch.addAttribute("email", "http://axschema.org/contact/email", true);
+		    	fetch.addAttribute("fullname", "http://axschema.org/namePerson", true);
+			}
+			// more generic request for other OpenId providers (myOpenId)
+			else {
+		    	fetch.addAttribute("fullname", "http://schema.openid.net/namePerson", true);
+				fetch.addAttribute("email", "http://schema.openid.net/contact/email", true);
+			}
 			// attach the extension to the authentication request
 			authReq.addExtension(fetch);
 			
