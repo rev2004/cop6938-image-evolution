@@ -10,10 +10,10 @@
     <welcome-file>default.jsp</welcome-file>
   </welcome-file-list>
   <servlet>
-    <description></description>
+    <description>OpenId based login service</description>
     <display-name>LoginServlet</display-name>
     <servlet-name>LoginServlet</servlet-name>
-    <servlet-class>LoginServlet</servlet-class>
+    <servlet-class>imageEvolveWeb.LoginServlet</servlet-class>
   </servlet>
   <servlet-mapping>
     <servlet-name>LoginServlet</servlet-name>
@@ -21,12 +21,12 @@
   </servlet-mapping>
   <servlet>
     <description>ffdvdvdfdcsd</description>
-    <display-name>testServlet</display-name>
-    <servlet-name>testServlet</servlet-name>
-    <servlet-class>TestServlet</servlet-class>
+    <display-name>TestServlet</display-name>
+    <servlet-name>TestServlet</servlet-name>
+    <servlet-class>imageEvolveWeb.TestServlet</servlet-class>
   </servlet>
   <servlet-mapping>
-    <servlet-name>testServlet</servlet-name>
-    <url-pattern>testServlet*</url-pattern>
+    <servlet-name>TestServlet</servlet-name>
+    <url-pattern>/TestServlet</url-pattern>
   </servlet-mapping>
 </web-app>
