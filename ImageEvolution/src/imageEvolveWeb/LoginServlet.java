@@ -75,6 +75,7 @@ public class LoginServlet extends HttpServlet {
 			String cookie = SessionManagement.makeSession(thisUserId,thisUserName,thisJSession).getCookie();
 			Cookie authCookie = new Cookie("authToken",cookie);
 			authCookie.setMaxAge(24*60*60);
+			authCookie.setSecure(true);
 			response.addCookie(authCookie);
 			
 			// redirect to dashboard
