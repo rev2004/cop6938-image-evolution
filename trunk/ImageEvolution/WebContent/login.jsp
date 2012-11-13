@@ -1,3 +1,4 @@
+<%@page import="java.security.Key"%>
 <%@ page language="java" contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8"%>
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
@@ -17,10 +18,6 @@
 			<form action="loginServlet?identifier=https://me.yahoo.com" method="post">
 				<input type="image" src="images/openid-logos-yahoo.png" value=" " /> 
 			</form>
-		</div>
-		<div>
-			<%= session.getId() %>
-		</div>
-		
+		</div>		
 	</body>
 </html>

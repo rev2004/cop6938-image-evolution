@@ -5,6 +5,7 @@ import java.util.List;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -39,8 +40,6 @@ public class LoginServlet extends HttpServlet {
 	public final String returnToUrl = "http://localhost:8080/ImageEvolution/loginServlet";
 	
 	
-	
-	
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
 		//context = config.getServletContext();
@@ -55,10 +54,10 @@ public class LoginServlet extends HttpServlet {
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		System.out.println("LoginServlet.doGet(...)");
 		Identifier identifier = this.verifyResponse(request);
 		if (identifier != null) {
-			response.setContentType("text/html");
+			
+			/*response.setContentType("text/html");
 			PrintWriter out = response.getWriter();
 			out.print("<html><body>");
 			out.print("<div>identifier: "+identifier+"</div><br/>");
@@ -66,6 +65,21 @@ public class LoginServlet extends HttpServlet {
 			out.print("<br/><strong>BUT</strong><br/>");
 			out.print("<img src=\"http://i0.kym-cdn.com/photos/images/original/000/234/765/b7e.jpg\"/>");
 			out.print("</body></html>");
+			//*/
+			
+			// get fetched values
+			String thisUserId = identifier.getIdentifier();
+			String thisUserName = request.getParameter("openid.ext1.value.email");
+			String thisJSession = request.getSession().getId();
+			// make session and set cookie
+			String cookie = SessionManagement.makeSession(thisUserId,thisUserName,thisJSession).getCookie();
+			Cookie authCookie = new Cookie("authToken",cookie);
+			authCookie.setMaxAge(24*60*60);
+			response.addCookie(authCookie);
+			
+			// redirect to dashboard
+			response.sendRedirect("index.jsp");
+			
 		} 
 		// Authentication verification failed, notify user
 		else {
