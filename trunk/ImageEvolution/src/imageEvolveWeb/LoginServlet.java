@@ -57,18 +57,15 @@ public class LoginServlet extends HttpServlet {
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		System.out.println("LoginServlet.doGet(...)");
 		Identifier identifier = this.verifyResponse(request);
-		System.out.println("identifier: " + identifier);
 		if (identifier != null) {
 			response.setContentType("text/html");
 			PrintWriter out = response.getWriter();
-			out.print("<html><body>This is supposed to do something with cookies and stuff");
+			out.print("<html><body>");
+			out.print("<div>identifier: "+identifier+"</div><br/>");
+			out.print("This is supposed to do something with cookies and stuff");
 			out.print("<br/><strong>BUT</strong><br/>");
 			out.print("<img src=\"http://i0.kym-cdn.com/photos/images/original/000/234/765/b7e.jpg\"/>");
 			out.print("</body></html>");
-			
-			
-			
-			
 		} 
 		// Authentication verification failed, notify user
 		else {
