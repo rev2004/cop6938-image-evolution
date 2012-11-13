@@ -2,12 +2,21 @@ package imageEvolveWeb;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.security.InvalidKeyException;
+import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Date;
 import java.util.Random;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.EncoderException;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.codec.net.URLCodec;
 
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.PropertiesCredentials;
@@ -39,8 +48,8 @@ public class SessionManagement {
 	};
 	
 	private static AmazonSimpleDBClient sdb = null;
-            
-			
+	public static final String HMAC_Algorithm = "HmacSHA1";
+	public static final String HMAC_Key = "";
 	
 	public String sessionId;
 	public String userId;
@@ -80,7 +89,7 @@ public class SessionManagement {
 	 * @param username
 	 * @return
 	 */
-	public static String makeSession(String userId, String userName, String jSession){
+	public static SessionManagement makeSession(String userId, String userName, String jSession){
 		// Initialize return object
 		SessionManagement newSession = new SessionManagement();
 		newSession.userName = userName;
@@ -95,34 +104,44 @@ public class SessionManagement {
 			// grab the connection object
 			AmazonSimpleDBClient sdb_loc = getSDB();
 			// check for collision
-			GetAttributesResult record = sdb_loc.getAttributes(
-					new GetAttributesRequest("ImgEvo_sessions",newSession.sessionId).withConsistentRead(true));
+			GetAttributesResult existing = sdb_loc.getAttributes(new GetAttributesRequest()
+					.withDomainName("ImgEvo_sessions")
+					.withItemName(newSession.sessionId)
+					.withConsistentRead(true));
+			
+			PutAttributesRequest putReq = new PutAttributesRequest();
 			// set new values
-			PutAttributesRequest req = new PutAttributesRequest();
-			req = req.withDomainName("ImgEvo_sessions").withItemName(newSession.sessionId);
-			req = req.withAttributes(new ReplaceableAttribute("userId",newSession.userId,true));
-			req = req.withAttributes(new ReplaceableAttribute("jSession",newSession.jSession,true));
-			req = req.withAttributes(new ReplaceableAttribute("userName",newSession.userName,true));
-			req = req.withExpected(new UpdateCondition().withName("userId").withExists(false));
-			req = req.withExpected(new UpdateCondition().withName("userName").withExists(false));
-			req = req.withExpected(new UpdateCondition().withName("userjSession").withExists(false));
+			putReq = putReq.withDomainName("ImgEvo_sessions").withItemName(newSession.sessionId);
+			putReq = putReq.withAttributes(new ReplaceableAttribute("userId",newSession.userId,true));
+			putReq = putReq.withAttributes(new ReplaceableAttribute("jSession",newSession.jSession,true));
+			putReq = putReq.withAttributes(new ReplaceableAttribute("userName",newSession.userName,true));
+			putReq = putReq.withAttributes(new ReplaceableAttribute("friendlyName",
+					newSession.friendlyName,true));
+			putReq = putReq.withAttributes(new ReplaceableAttribute("lastActivity",
+					Long.toString(newSession.lastActivity.getTime()),true));
+			// set update conditions assuming no existing
+			putReq = putReq.withExpected(new UpdateCondition().withName("userId").withExists(false));
+			putReq = putReq.withExpected(new UpdateCondition().withName("userName").withExists(false));
+			putReq = putReq.withExpected(new UpdateCondition().withName("userjSession").withExists(false));
 			// loop through existing and set expected values
-			for (Attribute a : record.getAttributes()){
+			for (Attribute a : existing.getAttributes()){
 				if (a.getName().equals("userId")){ 
-					req = req.withExpected(new UpdateCondition("userId", a.getValue(), true));
+					putReq = putReq.withExpected(new UpdateCondition("userId", a.getValue(), true));
 				} else if (a.getName().equals("userName")){ 
-					req = req.withExpected(new UpdateCondition("userName", a.getValue(), true));
+					putReq = putReq.withExpected(new UpdateCondition("userName", a.getValue(), true));
 				} else if (a.getName().equals("jSession")){ 
-					req = req.withExpected(new UpdateCondition("jSession", a.getValue(), true));
+					putReq = putReq.withExpected(new UpdateCondition("jSession", a.getValue(), true));
 				}
 			}
 			// make update
-			sdb_loc.putAttributes(req);
+			sdb_loc.putAttributes(putReq);
 			// check update success
 			done = true;
-			record = sdb_loc.getAttributes(
-					new GetAttributesRequest("ImgEvo_sessions",newSession.sessionId).withConsistentRead(true));
-			for (Attribute a : record.getAttributes()){
+			existing = sdb_loc.getAttributes(new GetAttributesRequest()
+					.withDomainName("ImgEvo_sessions")
+					.withItemName(newSession.sessionId)
+					.withConsistentRead(true));
+			for (Attribute a : existing.getAttributes()){
 				if (!a.getName().equals(newSession.userId)){ 
 					done = false;
 				} else if (!a.getName().equals(newSession.userName)){ 
@@ -133,7 +152,7 @@ public class SessionManagement {
 			}
 			
 		}
-		return newSession.toString();
+		return newSession;
 	}
 	
 	private static String randomSessionId(int byteLength){
@@ -150,6 +169,34 @@ public class SessionManagement {
 		}
 	}
 	
-	
+	public String getCookie(){
+		// session id
+		String tmp = this.sessionId;
+		// do hmac on session id for validation
+		try {
+			byte[] input = Hex.decodeHex(this.sessionId.toCharArray());
+		    byte[] keyBytes = Hex.decodeHex(SessionManagement.HMAC_Key.toCharArray());
+		    Key key = new SecretKeySpec(keyBytes,0,keyBytes.length,SessionManagement.HMAC_Algorithm); 
+		    Mac mac = Mac.getInstance(SessionManagement.HMAC_Algorithm);
+		    mac.init(key); 
+		    tmp += "_"+String.valueOf(Hex.encodeHex(mac.doFinal(input)));
+		} catch (Exception e) {
+			tmp += "_";
+		}
+		try {
+			tmp += "_"+(new URLCodec()).encode(this.userId);
+		} catch (EncoderException e) {
+			tmp += "_";
+		}
+		return tmp;
+	}
+	public static SessionManagement parseCookie(){
+		return null;
+	}
+	public static boolean validCookie(String cookie){
+		return false;
+	}
+
+		
 	
 }
