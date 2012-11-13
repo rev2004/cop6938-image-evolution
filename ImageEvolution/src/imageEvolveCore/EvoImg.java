@@ -17,7 +17,7 @@ import imageEvolveCore.EvoControl;
  */
 public class EvoImg {
 	
-	/* Source of randomness.
+	/** Source of randomness.
 	 * ThreadLocal used to avoid blocking when used by
 	 * concurrent threads
 	 */

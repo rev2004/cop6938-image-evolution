@@ -58,8 +58,6 @@ public class LoginServlet extends HttpServlet {
 		System.out.println("LoginServlet.doGet(...)");
 		Identifier identifier = this.verifyResponse(request);
 		System.out.println("identifier: " + identifier);
-		// if openid login succeded redirect to home page using our demo account
-		//if your site is open to anyone without login you can do the redirect directly
 		if (identifier != null) {
 			response.setContentType("text/html");
 			PrintWriter out = response.getWriter();
@@ -67,11 +65,20 @@ public class LoginServlet extends HttpServlet {
 			out.print("<br/><strong>BUT</strong><br/>");
 			out.print("<img src=\"http://i0.kym-cdn.com/photos/images/original/000/234/765/b7e.jpg\"/>");
 			out.print("</body></html>");
-		} else {
+			
+			
+			
+			
+		} 
+		// Authentication verification failed, notify user
+		else {
 			response.setContentType("text/html");
 			PrintWriter out = response.getWriter();
-			out.println("sorry, your authentication could not be processed.");
-			out.println("You might have discovered a bug. Please contact the site administrator.");
+			out.print("<html><body>");
+			out.print("Sorry,<br/>");
+			out.print("your authentication could not be processed.<br/>");
+			out.print("You might have discovered a bug. Please contact the site administrator.<br/>");
+			out.print("</body></html>");
 		}
 		
 	}
