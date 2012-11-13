@@ -90,11 +90,11 @@ public class SessionManagement {
 		tmp.userName = userName;
 		tmp.jSession = jSession;
 		tmp.lastActivity = new Date();
-		System.out.println("Start makeSession -"
-				+"   userId: "+tmp.userId
-				+"   userName: "+tmp.userName
-				+"   jSession: "+tmp.jSession
-				+"   lastActivity: "+tmp.lastActivity);
+		System.out.println("Start makeSession"
+				+"\nuserId: "+tmp.userId
+				+"\nuserName: "+tmp.userName
+				+"\njSession: "+tmp.jSession
+				+"\nlastActivity: "+tmp.lastActivity);
 		// try to get a new session Id until succeed
 		boolean done = false;
 		while (!done){
@@ -125,15 +125,15 @@ public class SessionManagement {
 			putReq = putReq.withExpected(new UpdateCondition().withName("userjSession").withExists(false));
 			// loop through existing and set expected values
 			for (Attribute a : existing.getAttributes()){
-				System.out.println("set expected attributes");
+				System.out.print("set expected attributes ");
 				if (a.getName().equals("userId")){
-					System.out.println("set expected attribute - userId");
+					System.out.println("- userId - ex="+a.getValue());
 					putReq = putReq.withExpected(new UpdateCondition("userId", a.getValue(), true));
-				} else if (a.getName().equals("userName")){
-					System.out.println("set expected attribute - userName");
+				} else if (a.getName().equals("- userName")){
+					System.out.println("- userName - ex="+a.getValue());
 					putReq = putReq.withExpected(new UpdateCondition("userName", a.getValue(), true));
 				} else if (a.getName().equals("jSession")){
-					System.out.println("set expected attribute - jSession");
+					System.out.println("- jSession - ex="+a.getValue());
 					putReq = putReq.withExpected(new UpdateCondition("jSession", a.getValue(), true));
 				}
 			}
@@ -145,25 +145,24 @@ public class SessionManagement {
 					.withItemName(tmp.sessionId)
 					.withConsistentRead(true));
 			done = !existing.getAttributes().isEmpty();
-			System.out.println(" checking exising.attributes !empty: done="+done);
+			System.out.println(" checking exising.attributes !empty - done="+done);
 			for (Attribute a : existing.getAttributes()){
-				System.out.println("check updated attributes");
-				if (!a.getName().equals("userId")){
-					System.out.print("check updated attribute - userId");
+				System.out.println("check updated attributes ");
+				if (a.getName().equals("userId")){
+					System.out.print("- userId - ");
 					System.out.print(a.getValue()+" = "+tmp.userId+" >> "+a.getValue().equals(tmp.userId));
 					done = (done) ? a.getValue().equals(tmp.userId) : false;
-					System.out.println("done="+done);
-				} else if (!a.getName().equals("userName")){ 
-					System.out.print("check updated attribute - userName");
+				} else if (a.getName().equals("userName")){ 
+					System.out.print("- userName - ");
 					System.out.print(a.getValue()+" = "+tmp.userName+" >> "+a.getValue().equals(tmp.userName));
 					done = (done) ? a.getValue().equals(tmp.userName) : false;
-					System.out.println("done="+done);
-				} else if (!a.getName().equals("jSession")){ 
-					System.out.print("check updated attribute - jSession");
+				} else if (a.getName().equals("jSession")){ 
+					System.out.print("- jSession - ");
 					System.out.print(a.getValue()+" = "+tmp.jSession+" >> "+a.getValue().equals(tmp.jSession));
 					done = (done) ? a.getValue().equals(tmp.jSession) : false;
-					System.out.println("done="+done);
+					
 				}
+				System.out.println(" - done="+done);
 			}
 			if (!done){
 				System.out.println("done failed");
@@ -262,7 +261,7 @@ public class SessionManagement {
 		// validate against session
 		matchSession = !existing.getAttributes().isEmpty();
 		for (Attribute a : existing.getAttributes()){
-			if (!a.getName().equals("userId")){ 
+			if (a.getName().equals("userId")){ 
 				matchUser = a.getValue().equals(tmp.userId);
 			}
 		}
@@ -288,7 +287,7 @@ public class SessionManagement {
 		// validate against session
 		matchSession = !existing.getAttributes().isEmpty();
 		for (Attribute a : existing.getAttributes()){
-			if (!a.getName().equals("userId")){ 
+			if (a.getName().equals("userId")){ 
 				matchUser = a.getValue().equals(tmp.userId);
 				rtn = a.getValue();
 			}
@@ -316,10 +315,10 @@ public class SessionManagement {
 		// validate against session
 		matchSession = !existing.getAttributes().isEmpty();
 		for (Attribute a : existing.getAttributes()){
-			if (!a.getName().equals("userId")){ 
+			if (a.getName().equals("userId")){ 
 				matchUser = a.getValue().equals(tmp.userId);
 				rtn = a.getValue();
-			} else if (!a.getName().equals("userName")){
+			} else if (a.getName().equals("userName")){
 				rtn = a.getValue();
 			}
 			
@@ -344,7 +343,7 @@ public class SessionManagement {
 		// validate against session
 		matchSession = !existing.getAttributes().isEmpty();
 		for (Attribute a : existing.getAttributes()){
-			if (!a.getName().equals("userId")){ 
+			if (a.getName().equals("userId")){ 
 				matchUser = a.getValue().equals(tmp.userId);
 			}
 		}
