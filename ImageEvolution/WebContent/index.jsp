@@ -7,6 +7,8 @@
 <%@ page import="com.amazonaws.services.s3.model.*" %>
 <%@ page import="com.amazonaws.services.simpledb.*" %>
 <%@ page import="com.amazonaws.services.simpledb.model.*" %>
+<%@ page import="imageEvolveWeb.*" %>
+
 
 <%! // Share the client objects across threads to
     // avoid creating new clients for each web request
@@ -39,17 +41,40 @@
     }
 %>
 
+
+<%	// test getting SessionManagement cookie and session
+	String authToken = "";
+	for(Cookie c : request.getCookies()){
+		if(c.getName().equals("authToken")){
+			authToken = c.getValue();
+		}
+	}
+	String userId = SessionManagement.getValidUserId(authToken);
+	String userName = new String();
+	String friendlyName = new String();
+	GetAttributesResult userRec = sdb.getAttributes(new GetAttributesRequest()
+	.withDomainName("ImgEvo_users")
+	.withItemName(userId)
+	.withConsistentRead(true));
+	for (Attribute a : userRec.getAttributes()){
+		if (a.getName().equals("userName")){
+			userName = a.getValue();
+		} else if (a.getName().equals("friendlyName")){
+			friendlyName = a.getValue();
+		}
+	}
+%>
+
 <!DOCTYPE html>
 <html>
 <head>
     <meta http-equiv="Content-type" content="text/html; charset=utf-8">
-    <title>Hello AWS Web World!</title>
+    <title>OOTB Dashboard</title>
     <link rel="stylesheet" href="styles/styles.css" type="text/css" media="screen">
 </head>
 <body>
-	<div>session id: <%= session.getId() %></div>
 	<div id="page intro">
-		hello session=<% request.getAttribute("name");%>
+		Hello <%= friendlyName %>!
 	</div>
 	
     <div id="content" class="container">

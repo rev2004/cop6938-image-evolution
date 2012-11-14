@@ -9,15 +9,16 @@
 	</head>
 	<body>
 		<div> 
-			session id: <%= session.getId() %>
+			Please select one of the following methods to login.
 		</div>
 		<div style="margin-left: 50px; margin-top: 40px; height: 60px;">
 			<form action="loginServlet?identifier=https://www.google.com/accounts/o8/id" method="post"> 
 				<input type="image" src="images/openid-logos-google.png" value=" " />
 			</form>
-			<form action="loginServlet?identifier=https://me.yahoo.com" method="post">
-				<input type="image" src="images/openid-logos-yahoo.png" value=" " /> 
-			</form>
+			<!-- <form action="loginServlet?identifier=https://me.yahoo.com" method="post">
+				<input type="image" src="images/openid-logos-noyahoo.png" value=" " /> 
+			</form> -->
+			<img src="images/openid-logos-noyahoo.png" /> 
 		</div>		
 	</body>
 </html>
