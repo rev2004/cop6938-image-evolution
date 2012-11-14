@@ -31,12 +31,12 @@
   </servlet-mapping>
   <servlet>
     <description></description>
-    <display-name>evoReqServlet</display-name>
-    <servlet-name>evoReqServlet</servlet-name>
-    <servlet-class>imageEvolveWeb.EvoReqServlet</servlet-class>
+    <display-name>evoRequestServlet</display-name>
+    <servlet-name>evoRequestServlet</servlet-name>
+    <servlet-class>imageEvolveWeb.EvoRequestServlet</servlet-class>
   </servlet>
   <servlet-mapping>
-    <servlet-name>evoReqServlet</servlet-name>
-    <url-pattern>/evoReqServlet</url-pattern>
+    <servlet-name>evoRequestServlet</servlet-name>
+    <url-pattern>/evoRequestServlet</url-pattern>
   </servlet-mapping>
 </web-app>

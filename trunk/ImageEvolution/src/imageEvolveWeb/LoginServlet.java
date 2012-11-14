@@ -1,4 +1,5 @@
 package imageEvolveWeb;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
@@ -21,8 +22,6 @@ import org.openid4java.message.ParameterList;
 import org.openid4java.message.ax.AxMessage;
 import org.openid4java.message.ax.FetchRequest;
 import org.openid4java.message.ax.FetchResponse;
-
-
 
 /**
  * Servlet implementation class OpenIdLoginServlet

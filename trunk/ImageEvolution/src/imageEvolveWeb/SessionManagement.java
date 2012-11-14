@@ -47,7 +47,23 @@ public class SessionManagement {
 		}
 	};
 	
-	private static AmazonSimpleDBClient sdb = null;
+	/** SimpleDB connection;
+	 * Thread local used to prevent blocking when threads concurrent.
+	 */
+	private static final ThreadLocal<AmazonSimpleDBClient> sdb = new ThreadLocal<AmazonSimpleDBClient>() {
+		@Override protected AmazonSimpleDBClient initialValue() { 
+			try {
+				AWSCredentials cred;
+				cred = new PropertiesCredentials(
+				        SessionManagement.class.getClassLoader()
+				        .getResourceAsStream("AwsCredentials.properties"));
+				return new AmazonSimpleDBClient(cred);
+			} catch (IOException e) {
+				return null;
+			}
+		}
+	};
+	
 	public static final String HMAC_Algorithm = "HmacSHA1";
 	public static final String HMAC_Key = "cac23b0b8fd3407478cf61998189324ffc05a9d39b6290ee06423b97fb68de2212d054db7e61ff312e86469583275793397be7abf155e0460371c34cc725944a"; // this needs to be moved into a configuration file... low priority
 	
@@ -65,23 +81,6 @@ public class SessionManagement {
 		this.friendlyName = null;
 		this.jSession = null;
 		this.lastActivity = null;
-	}
-	
-	/** Get the SimpleDb connect (initialize if not already existing)
-	 * keeps multiple instances of connection from being created
-	 */
-	private static AmazonSimpleDBClient getSDB(){
-		if (sdb==null){ 
-			AWSCredentials cred;
-			try {
-				cred = new PropertiesCredentials(
-				        SessionManagement.class.getClassLoader().getResourceAsStream("AwsCredentials.properties"));
-				sdb = new AmazonSimpleDBClient(cred);
-			} catch (IOException e) {
-				sdb = null;
-			}
-		}
-		return sdb;
 	}
 	
 	/** Allocate an new globally unique session and return
@@ -112,10 +111,8 @@ public class SessionManagement {
 			// randomly guess a new session id
 			tmp.sessionId = randomSessionId(20);
 			//System.out.println("rndSessionId: "+tmp.sessionId);
-			// grab the connection object
-			AmazonSimpleDBClient sdb_loc = getSDB();
 			// check for collision
-			GetAttributesResult existing = sdb_loc.getAttributes(new GetAttributesRequest()
+			GetAttributesResult existing = sdb.get().getAttributes(new GetAttributesRequest()
 					.withDomainName("ImgEvo_sessions")
 					.withItemName(tmp.sessionId)
 					.withConsistentRead(true));
@@ -149,9 +146,9 @@ public class SessionManagement {
 				}
 			}
 			// make update
-			sdb_loc.putAttributes(putReq);
+			sdb.get().putAttributes(putReq);
 			// check update success
-			existing = sdb_loc.getAttributes(new GetAttributesRequest()
+			existing = sdb.get().getAttributes(new GetAttributesRequest()
 					.withDomainName("ImgEvo_sessions")
 					.withItemName(tmp.sessionId)
 					.withConsistentRead(true));
@@ -202,8 +199,6 @@ public class SessionManagement {
 	 * @param friendlyName
 	 */
 	public static void makeUser(String userId, String userName, String friendlyName){
-		// grab the connection object
-		AmazonSimpleDBClient sdb_loc = getSDB();
 		// create update request
 		PutAttributesRequest putReq = new PutAttributesRequest();
 		// set new values
@@ -213,7 +208,7 @@ public class SessionManagement {
 		//putReq = putReq.withAttributes(new ReplaceableAttribute("canEvoRequest","true",true));
 		//putReq = putReq.withExpected(new UpdateCondition().withName("userName").withExists(false));
 		// make update
-		sdb_loc.putAttributes(putReq);
+		sdb.get().putAttributes(putReq);
 	}
 	
 	/** Update the indicated sessions lastActivity time
@@ -223,10 +218,8 @@ public class SessionManagement {
 	public static boolean pokeSession(String sessionId){
 		boolean success = false;
 		String now = Long.toString((new Date()).getTime()); 
-		// grab the connection object
-		AmazonSimpleDBClient sdb_loc = getSDB();
 		// check if session exists (I know this should be a select, but that requires more research)
-		GetAttributesResult existing = sdb_loc.getAttributes(new GetAttributesRequest()
+		GetAttributesResult existing = sdb.get().getAttributes(new GetAttributesRequest()
 		.withDomainName("ImgEvo_sessions")
 		.withItemName(sessionId)
 		.withAttributeNames("lastActivity")
@@ -238,7 +231,7 @@ public class SessionManagement {
 		putReq = putReq.withDomainName("ImgEvo_sessions").withItemName(sessionId);
 		putReq = putReq.withAttributes(new ReplaceableAttribute("lastActivity",now,true));
 		// check if success
-		existing = sdb_loc.getAttributes(new GetAttributesRequest()
+		existing = sdb.get().getAttributes(new GetAttributesRequest()
 		.withDomainName("ImgEvo_sessions")
 		.withItemName(sessionId)
 		.withAttributeNames("lastActivity")
@@ -286,9 +279,7 @@ public class SessionManagement {
 	}
 	public static Map<String,String> getUser(String authToken){
 		String userId = SessionManagement.getValidUserId(authToken);
-		// grab the connection object
-		AmazonSimpleDBClient sdb_loc = getSDB();
-		GetAttributesResult existing = sdb_loc.getAttributes(new GetAttributesRequest()
+		GetAttributesResult existing = sdb.get().getAttributes(new GetAttributesRequest()
 		.withDomainName("ImgEvo_users")
 		.withItemName(userId)
 		.withConsistentRead(true));
@@ -318,10 +309,8 @@ public class SessionManagement {
 		} catch (DecoderException e) { }
 		//if (!validCookie(parts[0], parts[1])){ return null; }
 		
-		// grab the connection object
-		AmazonSimpleDBClient sdb_loc = getSDB();
 		// get current session in SimpleDB
-		GetAttributesResult existing = sdb_loc.getAttributes(new GetAttributesRequest()
+		GetAttributesResult existing = sdb.get().getAttributes(new GetAttributesRequest()
 				.withDomainName("ImgEvo_sessions")
 				.withItemName(tmp.sessionId)
 				.withAttributeNames("userId")
@@ -346,10 +335,8 @@ public class SessionManagement {
 		} catch (DecoderException e) { }
 		//if (!validCookie(parts[0], parts[1])){ return null; }
 		
-		// grab the connection object
-		AmazonSimpleDBClient sdb_loc = getSDB();
 		// get current session in SimpleDB
-		GetAttributesResult existing = sdb_loc.getAttributes(new GetAttributesRequest()
+		GetAttributesResult existing = sdb.get().getAttributes(new GetAttributesRequest()
 				.withDomainName("ImgEvo_sessions")
 				.withItemName(tmp.sessionId)
 				.withAttributeNames("userId")
@@ -375,10 +362,8 @@ public class SessionManagement {
 		} catch (DecoderException e) { }
 		//if (!validCookie(parts[0], parts[1])){ return null; }
 		
-		// grab the connection object
-		AmazonSimpleDBClient sdb_loc = getSDB();
 		// get current session in SimpleDB
-		GetAttributesResult existing = sdb_loc.getAttributes(new GetAttributesRequest()
+		GetAttributesResult existing = sdb.get().getAttributes(new GetAttributesRequest()
 				.withDomainName("ImgEvo_sessions")
 				.withItemName(tmp.sessionId)
 				.withAttributeNames("userId")
@@ -407,10 +392,8 @@ public class SessionManagement {
 		} catch (DecoderException e) { }
 		//if (!validCookie(parts[0], parts[1])){ return false; }
 		
-		// grab the connection object
-		AmazonSimpleDBClient sdb_loc = getSDB();
 		// get current session in SimpleDB
-		GetAttributesResult existing = sdb_loc.getAttributes(new GetAttributesRequest()
+		GetAttributesResult existing = sdb.get().getAttributes(new GetAttributesRequest()
 				.withDomainName("ImgEvo_sessions")
 				.withItemName(tmp.sessionId)
 				.withConsistentRead(true));
