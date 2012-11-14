@@ -18,23 +18,21 @@ import com.amazonaws.services.simpledb.model.DeleteDomainRequest;
 public class PurgeSessionsServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
     
-	private static AmazonSimpleDBClient sdb = null;
-	/** Get the SimpleDb connect (initialize if not already existing)
-	 * keeps multiple instances of connection from being created
+	/** SimpleDB connection;
+	 * Thread local used to prevent blocking when threads concurrent.
 	 */
-	private static AmazonSimpleDBClient getSDB(){
-		if (sdb==null){ 
-			AWSCredentials cred;
+	private static final ThreadLocal<AmazonSimpleDBClient> sdb = new ThreadLocal<AmazonSimpleDBClient>() {
+		@Override protected AmazonSimpleDBClient initialValue() { 
 			try {
-				cred = new PropertiesCredentials(
-				        SessionManagement.class.getClassLoader().getResourceAsStream("AwsCredentials.properties"));
-				sdb = new AmazonSimpleDBClient(cred);
+				AWSCredentials cred = new PropertiesCredentials(
+						EvoRequestServlet.class.getClassLoader()
+				        .getResourceAsStream("AwsCredentials.properties"));
+				return new AmazonSimpleDBClient(cred);
 			} catch (IOException e) {
-				sdb = null;
+				return null;
 			}
 		}
-		return sdb;
-	}
+	};
 	
     /**
      * @see HttpServlet#HttpServlet()
@@ -45,13 +43,12 @@ public class PurgeSessionsServlet extends HttpServlet {
 
     private static void purgeSessions(){
     	String sessionDomainName = "ImgEvo_sessions";
-		AmazonSimpleDBClient sdb_loc = getSDB();
 		DeleteDomainRequest delete = new DeleteDomainRequest();
 		delete.setDomainName(sessionDomainName);
-		sdb_loc.deleteDomain(delete);
+		sdb.get().deleteDomain(delete);
 		CreateDomainRequest create = new CreateDomainRequest();
 		create.setDomainName(sessionDomainName);
-		sdb_loc.createDomain(create);
+		sdb.get().createDomain(create);
     }
     
 	/**

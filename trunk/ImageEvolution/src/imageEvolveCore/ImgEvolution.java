@@ -7,6 +7,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Writer;
 import java.util.Arrays;
 import java.util.Random;
@@ -40,12 +41,12 @@ public class ImgEvolution implements Runnable{
 	};
 	
 	/* Evolution instance variables */
-	String name;
-	EvoControl control;
-	private BufferedImage sourceImg;
+	public String name;
+	public EvoControl control;
+	public BufferedImage sourceImg;
 	private EvoImg best;
 	private EvoImg[] population;
-	private File outImg;
+	public String outImg;
 	private Writer log;
 	
 	/* Constructors */
@@ -80,8 +81,8 @@ public class ImgEvolution implements Runnable{
 		ImgEvolution e1 = new ImgEvolution("HC"); // HC
 		ImgEvolution e2 = new ImgEvolution("GA"); // GA
 		try {
-			e1.outImg = new File("best_hc.png");
-			e2.outImg = new File("best_ga.png");
+			e1.outImg = "best_hc.png";
+			e2.outImg = "best_ga.png";
 			e1.log = new FileWriter(new File("hc_log.txt").getAbsoluteFile());
 			e2.log = new FileWriter(new File("ga_log.txt").getAbsoluteFile());
 		} catch (IOException exception) {
@@ -311,15 +312,28 @@ public class ImgEvolution implements Runnable{
 		}
 		return tmp;
 	}
+	/** Read an image from a InputStream
+	 * @param image InputStream to be 
+	 * @return
+	 */
+	public static BufferedImage getSourceImage(InputStream image){
+		BufferedImage tmp = null;
+		try {
+			tmp = ImageIO.read(image);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return tmp;
+	}
 	/** Output an image to file
 	 * @param img BufferedImage to write to file
 	 * @param fmt String file format (e.g. "png" or "jpeg")
 	 * @param file File to output image to
 	 * @see ImageIO.getWriterFormatNames()
 	 */
-	public static void outputImage(BufferedImage img, String fmt, File file){
+	public static void outputImage(BufferedImage img, String fmt, String filenm){
 		try {
-			ImageIO.write(img, fmt, file);
+			ImageIO.write(img, fmt, new File(filenm));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

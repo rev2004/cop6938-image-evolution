@@ -52,7 +52,7 @@ public class EvoControl {
 	public boolean killParents; // Flag to remove parents from next generation
 	public boolean rndCutoff; // Flag if parent selection should be weighted random (otherwise top X%)
 	public double threshold; // Percentage fitness at which evolution can end
-	public int maxGenerations; // maximum number of generations 
+	public int maxGenerations; // maximum number of generations
 	
 	/** Default constructor.
 	 * Requires many parameters to be set after construction for correct function.
