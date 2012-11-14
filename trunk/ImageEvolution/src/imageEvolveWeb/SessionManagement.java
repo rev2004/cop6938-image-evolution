@@ -7,6 +7,7 @@ import java.security.SecureRandom;
 import java.util.Date;
 import java.util.Random;
 
+import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.EncoderException;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.net.URLCodec;
@@ -83,24 +84,29 @@ public class SessionManagement {
 	 * @param username
 	 * @return
 	 */
-	public static SessionManagement makeSession(String userId, String userName, String jSession){
+	public static SessionManagement makeSession(String userId, String userName, String jSession, String friendlyName){
 		// Initialize return object
 		SessionManagement tmp = new SessionManagement();
 		tmp.userId = userId;
 		tmp.userName = userName;
 		tmp.jSession = jSession;
+		tmp.friendlyName = friendlyName;
 		tmp.lastActivity = new Date();
+		// automatically create/update user from session
+		makeUser(tmp.userId, tmp.userName, tmp.friendlyName);
+		/* output for debugging
 		System.out.println("Start makeSession"
 				+"\nuserId: "+tmp.userId
 				+"\nuserName: "+tmp.userName
 				+"\njSession: "+tmp.jSession
-				+"\nlastActivity: "+tmp.lastActivity);
+				+"\nfriendlyName: "+tmp.friendlyName
+				+"\nlastActivity: "+tmp.lastActivity); //*/
 		// try to get a new session Id until succeed
 		boolean done = false;
 		while (!done){
 			// randomly guess a new session id
 			tmp.sessionId = randomSessionId(20);
-			System.out.println("rndSessionId: "+tmp.sessionId);
+			//System.out.println("rndSessionId: "+tmp.sessionId);
 			// grab the connection object
 			AmazonSimpleDBClient sdb_loc = getSDB();
 			// check for collision
@@ -115,8 +121,8 @@ public class SessionManagement {
 			putReq = putReq.withAttributes(new ReplaceableAttribute("userId",tmp.userId,true));
 			putReq = putReq.withAttributes(new ReplaceableAttribute("jSession",tmp.jSession,true));
 			putReq = putReq.withAttributes(new ReplaceableAttribute("userName",tmp.userName,true));
-			//putReq = putReq.withAttributes(new ReplaceableAttribute("friendlyName",
-			//		tmp.friendlyName,true));
+			putReq = putReq.withAttributes(new ReplaceableAttribute("friendlyName",
+					tmp.friendlyName,true));
 			putReq = putReq.withAttributes(new ReplaceableAttribute("lastActivity",
 					Long.toString(tmp.lastActivity.getTime()),true));
 			// set update conditions assuming no existing
@@ -125,15 +131,15 @@ public class SessionManagement {
 			putReq = putReq.withExpected(new UpdateCondition().withName("userjSession").withExists(false));
 			// loop through existing and set expected values
 			for (Attribute a : existing.getAttributes()){
-				System.out.print("set expected attributes ");
+				//System.out.print("set expected attributes ");
 				if (a.getName().equals("userId")){
-					System.out.println("- userId - ex="+a.getValue());
+					//System.out.println("- userId - ex="+a.getValue());
 					putReq = putReq.withExpected(new UpdateCondition("userId", a.getValue(), true));
-				} else if (a.getName().equals("- userName")){
-					System.out.println("- userName - ex="+a.getValue());
+				} else if (a.getName().equals("userName")){
+					//System.out.println("- userName - ex="+a.getValue());
 					putReq = putReq.withExpected(new UpdateCondition("userName", a.getValue(), true));
 				} else if (a.getName().equals("jSession")){
-					System.out.println("- jSession - ex="+a.getValue());
+					//System.out.println("- jSession - ex="+a.getValue());
 					putReq = putReq.withExpected(new UpdateCondition("jSession", a.getValue(), true));
 				}
 			}
@@ -145,27 +151,27 @@ public class SessionManagement {
 					.withItemName(tmp.sessionId)
 					.withConsistentRead(true));
 			done = !existing.getAttributes().isEmpty();
-			System.out.println(" checking exising.attributes !empty - done="+done);
+			//System.out.println(" checking exising.attributes !empty - done="+done);
 			for (Attribute a : existing.getAttributes()){
-				System.out.println("check updated attributes ");
+				//System.out.println("check updated attributes ");
 				if (a.getName().equals("userId")){
-					System.out.print("- userId - ");
-					System.out.print(a.getValue()+" = "+tmp.userId+" >> "+a.getValue().equals(tmp.userId));
+					//System.out.print("- userId - ");
+					//System.out.print(a.getValue()+" = "+tmp.userId+" >> "+a.getValue().equals(tmp.userId));
 					done = (done) ? a.getValue().equals(tmp.userId) : false;
 				} else if (a.getName().equals("userName")){ 
-					System.out.print("- userName - ");
-					System.out.print(a.getValue()+" = "+tmp.userName+" >> "+a.getValue().equals(tmp.userName));
+					//System.out.print("- userName - ");
+					//System.out.print(a.getValue()+" = "+tmp.userName+" >> "+a.getValue().equals(tmp.userName));
 					done = (done) ? a.getValue().equals(tmp.userName) : false;
 				} else if (a.getName().equals("jSession")){ 
-					System.out.print("- jSession - ");
-					System.out.print(a.getValue()+" = "+tmp.jSession+" >> "+a.getValue().equals(tmp.jSession));
+					//System.out.print("- jSession - ");
+					//System.out.print(a.getValue()+" = "+tmp.jSession+" >> "+a.getValue().equals(tmp.jSession));
 					done = (done) ? a.getValue().equals(tmp.jSession) : false;
 					
 				}
-				System.out.println(" - done="+done);
+				//System.out.println(" - done="+done);
 			}
 			if (!done){
-				System.out.println("done failed");
+				//System.out.println("done failed");
 				done=true;
 			}
 		}
@@ -183,6 +189,26 @@ public class SessionManagement {
 		} catch (UnsupportedEncodingException e) {
 			return null;
 		}
+	}
+	
+	/** makes or updates a user from session information
+	 * @param userId
+	 * @param userName
+	 * @param friendlyName
+	 */
+	public static void makeUser(String userId, String userName, String friendlyName){
+		// grab the connection object
+		AmazonSimpleDBClient sdb_loc = getSDB();
+		// create update request
+		PutAttributesRequest putReq = new PutAttributesRequest();
+		// set new values
+		putReq = putReq.withDomainName("ImgEvo_users").withItemName(userId);
+		putReq = putReq.withAttributes(new ReplaceableAttribute("userName",userName,true));
+		putReq = putReq.withAttributes(new ReplaceableAttribute("friendlyName",friendlyName,true));
+		putReq = putReq.withAttributes(new ReplaceableAttribute("canEvoRequest","false",true));
+		//putReq = putReq.withExpected(new UpdateCondition().withName("userName").withExists(false));
+		// make update
+		sdb_loc.putAttributes(putReq);
 	}
 	
 	/** Update the indicated sessions lastActivity time
@@ -247,7 +273,9 @@ public class SessionManagement {
 		String[] parts = cookie.split("_", 2);
 		SessionManagement tmp = new SessionManagement();
 		tmp.sessionId = parts[0];
-		tmp.userId = parts[1];
+		try {
+			tmp.userId = (new URLCodec()).decode(parts[1]);
+		} catch (DecoderException e) { }
 		//if (!validCookie(parts[0], parts[1])){ return null; }
 		
 		// grab the connection object
@@ -273,7 +301,9 @@ public class SessionManagement {
 		String[] parts = cookie.split("_", 2);
 		SessionManagement tmp = new SessionManagement();
 		tmp.sessionId = parts[0];
-		tmp.userId = parts[1];
+		try {
+			tmp.userId = (new URLCodec()).decode(parts[1]);
+		} catch (DecoderException e) { }
 		//if (!validCookie(parts[0], parts[1])){ return null; }
 		
 		// grab the connection object
@@ -300,7 +330,9 @@ public class SessionManagement {
 		String[] parts = cookie.split("_", 2);
 		SessionManagement tmp = new SessionManagement();
 		tmp.sessionId = parts[0];
-		tmp.userId = parts[1];
+		try {
+			tmp.userId = (new URLCodec()).decode(parts[1]);
+		} catch (DecoderException e) { }
 		//if (!validCookie(parts[0], parts[1])){ return null; }
 		
 		// grab the connection object
@@ -330,7 +362,9 @@ public class SessionManagement {
 		String[] parts = cookie.split("_", 2);
 		SessionManagement tmp = new SessionManagement();
 		tmp.sessionId = parts[0];
-		tmp.userId = parts[1];
+		try {
+			tmp.userId = (new URLCodec()).decode(parts[1]);
+		} catch (DecoderException e) { }
 		//if (!validCookie(parts[0], parts[1])){ return false; }
 		
 		// grab the connection object
