@@ -5,7 +5,12 @@ import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
+
+import javax.servlet.http.Cookie;
 
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.EncoderException;
@@ -264,6 +269,41 @@ public class SessionManagement {
 			tmp += "_"+(new URLCodec()).encode(this.userId);
 		} catch (EncoderException e) {
 			tmp += "_";
+		}
+		return tmp;
+	}
+	
+	public static Map<String,String> getUser(Cookie[] C){
+		for(Cookie c : C){
+			if(c.getName().equals("authToken")){
+				return getUser(c);
+			}
+		}
+		return null;
+	}
+	public static Map<String,String> getUser(Cookie c){
+		return getUser(c.getValue());
+	}
+	public static Map<String,String> getUser(String authToken){
+		String userId = SessionManagement.getValidUserId(authToken);
+		// grab the connection object
+		AmazonSimpleDBClient sdb_loc = getSDB();
+		GetAttributesResult existing = sdb_loc.getAttributes(new GetAttributesRequest()
+		.withDomainName("ImgEvo_users")
+		.withItemName(userId)
+		.withConsistentRead(true));
+		// put attributes into a map
+		Map<String, String> userRec = Attrb2Map(existing.getAttributes());
+		// make SURE that itemName is in the map and also replicate as userId for fun
+		userRec.put("itemName", userId);
+		userRec.put("userId", userId);
+		//return map
+		return userRec;
+	}
+	public static Map<String,String> Attrb2Map(List<Attribute> A){
+		Map<String,String> tmp = new HashMap<String,String>();
+		for (Attribute a : A){
+			tmp.put(a.getName(), a.getValue());
 		}
 		return tmp;
 	}

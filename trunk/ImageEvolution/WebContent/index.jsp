@@ -1,4 +1,5 @@
 <%@ page language="java" session="true" contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
+<%@ page import="java.util.Map" %>
 <%@ page import="com.amazonaws.*" %>
 <%@ page import="com.amazonaws.auth.*" %>
 <%@ page import="com.amazonaws.services.ec2.*" %>
@@ -43,26 +44,7 @@
 
 
 <%	// test getting SessionManagement cookie and session
-	String authToken = "";
-	for(Cookie c : request.getCookies()){
-		if(c.getName().equals("authToken")){
-			authToken = c.getValue();
-		}
-	}
-	String userId = SessionManagement.getValidUserId(authToken);
-	String userName = new String();
-	String friendlyName = new String();
-	GetAttributesResult userRec = sdb.getAttributes(new GetAttributesRequest()
-	.withDomainName("ImgEvo_users")
-	.withItemName(userId)
-	.withConsistentRead(true));
-	for (Attribute a : userRec.getAttributes()){
-		if (a.getName().equals("userName")){
-			userName = a.getValue();
-		} else if (a.getName().equals("friendlyName")){
-			friendlyName = a.getValue();
-		}
-	}
+	Map<String,String> user= SessionManagement.getUser(request.getCookies());
 %>
 
 <!DOCTYPE html>
@@ -74,7 +56,7 @@
 </head>
 <body>
 	<div id="page intro">
-		Hello <%= friendlyName %>!
+		Hello <%= user.get("friendlyName") %>!
 	</div>
 	
     <div id="content" class="container">
