@@ -1,5 +1,6 @@
 <%@ page language="java" session="true" contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
 <%@ page import="java.util.Map" %>
+<%@ page import="imageEvolveWeb.*" %>
 <%@ page import="com.amazonaws.*" %>
 <%@ page import="com.amazonaws.auth.*" %>
 <%@ page import="com.amazonaws.services.ec2.*" %>
@@ -8,7 +9,7 @@
 <%@ page import="com.amazonaws.services.s3.model.*" %>
 <%@ page import="com.amazonaws.services.simpledb.*" %>
 <%@ page import="com.amazonaws.services.simpledb.model.*" %>
-<%@ page import="imageEvolveWeb.*" %>
+
 
 
 <%! // Share the client objects across threads to
