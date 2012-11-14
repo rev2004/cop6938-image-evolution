@@ -26,7 +26,7 @@ public class EvolutionManager implements Runnable{
 				// if terminated get another job off the queue
 				if (!jobs[i].isAlive()){
 					// get message from queue (may wait a long time for a queue message)
-					ReqQueueManagement.recvSqsMsg(900);
+					//ReqQueueManagement.recvSqsMsg(900);
 					
 					// get target image
 					
