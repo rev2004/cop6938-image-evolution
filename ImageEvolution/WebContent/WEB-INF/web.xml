@@ -29,4 +29,14 @@
     <servlet-name>purgeSessionsServlet</servlet-name>
     <url-pattern>/purgeSessionsServlet</url-pattern>
   </servlet-mapping>
+  <servlet>
+    <description></description>
+    <display-name>evoReqServlet</display-name>
+    <servlet-name>evoReqServlet</servlet-name>
+    <servlet-class>imageEvolveWeb.EvoReqServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>evoReqServlet</servlet-name>
+    <url-pattern>/evoReqServlet</url-pattern>
+  </servlet-mapping>
 </web-app>
