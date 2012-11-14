@@ -56,6 +56,7 @@
     <link rel="stylesheet" href="styles/styles.css" type="text/css" media="screen">
 </head>
 <body>
+	<div style="padding:2px;border:1px solid red;">userName= <%= user.get("email") %></div>
 	<div id="page intro">
 		Hello <%= user.get("friendlyName") %>!
 	</div>

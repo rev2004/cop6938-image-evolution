@@ -68,14 +68,14 @@ public class LoginServlet extends HttpServlet {
 			
 			// get fetched values
 			String thisUserId = identifier.getIdentifier();
-			String thisUserName = request.getParameter("openid.ext1.value.email");
 			String thisJSession = request.getSession().getId();
+			String thisEmail = request.getParameter("openid.ext1.value.email");
 			String thisFriendlyName = request.getParameter("openid.ext1.value.firstName");
 			//String thisFriendlyName = request.getParameter("openid.ext1.value.firstName")
 			//							+" "+request.getParameter("openid.ext1.value.lastName");
 			// make session and set cookie
-			String cookie = SessionManagement.makeSession(thisUserId,thisUserName
-					,thisJSession, thisFriendlyName).getCookie();
+			String cookie = SessionManagement.makeSession(thisUserId, thisJSession,
+					thisEmail, thisFriendlyName).getCookie();
 			Cookie authCookie = new Cookie("authToken",cookie);
 			authCookie.setMaxAge(24*60*60);
 			//authCookie.setSecure(true);

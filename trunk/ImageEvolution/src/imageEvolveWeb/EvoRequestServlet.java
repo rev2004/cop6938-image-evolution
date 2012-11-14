@@ -2,12 +2,19 @@ package imageEvolveWeb;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.List;
 import java.util.Map;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload.FileItemFactory;
+import org.apache.commons.fileupload.FileUploadException;
+import org.apache.commons.fileupload.disk.DiskFileItemFactory;
+import org.apache.commons.fileupload.servlet.ServletFileUpload;
 
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.PropertiesCredentials;
@@ -72,9 +79,46 @@ public class EvoRequestServlet extends HttpServlet {
     public EvoRequestServlet() {
         super();
     }
+	
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		// get current user
 		Map<String,String> user = SessionManagement.getUser(request.getCookies());
+		// parse request
+		boolean isMultipart = ServletFileUpload.isMultipartContent(request);
+		if (isMultipart){
+			// Create a factory for disk-based file items
+			FileItemFactory factory = new DiskFileItemFactory();
+			// Create a new file upload handler
+			ServletFileUpload upload = new ServletFileUpload(factory);
+			// Parse the request
+			List<FileItem> items = null;
+			try {
+				@SuppressWarnings("unchecked")
+				List<FileItem> tmp = upload.parseRequest(request);
+				items = tmp;
+			} catch (FileUploadException e) {
+				e.printStackTrace();
+			}
+			// Process the uploaded items
+			for(FileItem item : items) {
+				if (item.isFormField()) {
+					
+					
+					//processFormField(item);
+					
+					
+				} else {
+					
+					
+					//processUploadedFile(item);
+					
+					
+				}
+			}
+		}
+		
+		
+		
 		
 		response.setContentType("text/html");
 		PrintWriter out = response.getWriter();

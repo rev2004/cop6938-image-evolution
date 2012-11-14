@@ -13,6 +13,7 @@
 <title>Insert title here</title>
 </head>
 <body>
+	<div style="padding:2px;border:1px solid red;">userName= <%= user.get("email") %></div>
 	<div>session id: <%= session.getId() %></div>
 </body>
 </html>
