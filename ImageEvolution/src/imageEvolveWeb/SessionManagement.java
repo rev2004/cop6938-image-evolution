@@ -121,16 +121,14 @@ public class SessionManagement {
 			putReq = putReq.withAttributes(new ReplaceableAttribute("jSession",tmp.jSession,true));
 			putReq = putReq.withAttributes(new ReplaceableAttribute("lastActivity",
 					Long.toString(tmp.lastActivity.getTime()),true));
-			if (tmp.friendlyName !=null && !tmp.friendlyName.equals("")){
+			if (tmp.friendlyName!=null && !tmp.friendlyName.equals("")){
 				putReq = putReq.withAttributes(new ReplaceableAttribute("email",tmp.email,true));
 			}
-			if (tmp.friendlyName !=null && !tmp.friendlyName.equals("")){
+			if (tmp.friendlyName!=null && !tmp.friendlyName.equals("")){
 				putReq = putReq.withAttributes(new ReplaceableAttribute("friendlyName",
 						tmp.friendlyName,true));
 			}
-
-			
-			// set update conditions assuming no existing
+			// set update conditions to prevent overwriting existing session
 			putReq = putReq.withExpected(new UpdateCondition().withName("userId").withExists(false));
 			putReq = putReq.withExpected(new UpdateCondition().withName("userjSession").withExists(false));
 			// make update
@@ -157,10 +155,6 @@ public class SessionManagement {
 					
 				}
 				//System.out.println(" - done="+done);
-			}
-			if (!done){
-				//System.out.println("done failed");
-				done=true;
 			}
 		}
 		return tmp;
