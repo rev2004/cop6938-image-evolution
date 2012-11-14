@@ -205,7 +205,7 @@ public class SessionManagement {
 		putReq = putReq.withDomainName("ImgEvo_users").withItemName(userId);
 		putReq = putReq.withAttributes(new ReplaceableAttribute("userName",userName,true));
 		putReq = putReq.withAttributes(new ReplaceableAttribute("friendlyName",friendlyName,true));
-		putReq = putReq.withAttributes(new ReplaceableAttribute("canEvoRequest","false",true));
+		//putReq = putReq.withAttributes(new ReplaceableAttribute("canEvoRequest","true",true));
 		//putReq = putReq.withExpected(new UpdateCondition().withName("userName").withExists(false));
 		// make update
 		sdb_loc.putAttributes(putReq);
