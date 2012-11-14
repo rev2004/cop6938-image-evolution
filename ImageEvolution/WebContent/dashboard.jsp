@@ -13,6 +13,7 @@
 <title>Image Evolution - Dashboard</title>
 </head>
 <body>
+	<div style="padding:2px;border:1px solid red;">userName= <%= user.get("email") %></div>
 	<div>Welcome, <%= user.get("friendlyName") %></div>
 </body>
 </html>

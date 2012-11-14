@@ -68,7 +68,7 @@ public class SessionManagement {
 	
 	public String sessionId;
 	public String userId;
-	public String userName;
+	public String email;
 	public String friendlyName;
 	public String jSession;
 	public Date lastActivity;
@@ -76,80 +76,71 @@ public class SessionManagement {
 	public SessionManagement(){
 		this.sessionId = null;
 		this.userId = null;
-		this.userName = null;
+		this.email = null;
 		this.friendlyName = null;
 		this.jSession = null;
 		this.lastActivity = null;
 	}
 	
 	/** Allocate an new globally unique session and return
-	 * the session identifier (cookie).
-	 * @param username
+	 * the session identifier (for cookie).
+	 * @param userId
+	 * @param email
+	 * @param jSession
+	 * @param friendlyName
 	 * @return
 	 */
-	public static SessionManagement makeSession(String userId, String userName, String jSession, String friendlyName){
+	public static SessionManagement makeSession(String userId, String jSession, String email, String friendlyName){
 		// Initialize return object
 		SessionManagement tmp = new SessionManagement();
 		tmp.userId = userId;
-		tmp.userName = userName;
+		tmp.email = email;
 		tmp.jSession = jSession;
 		tmp.friendlyName = friendlyName;
 		tmp.lastActivity = new Date();
 		// automatically create/update user from session
-		makeUser(tmp.userId, tmp.userName, tmp.friendlyName);
+		makeUser(tmp.userId, tmp.email, tmp.friendlyName);
 		/* output for debugging
 		System.out.println("Start makeSession"
 				+"\nuserId: "+tmp.userId
-				+"\nuserName: "+tmp.userName
 				+"\njSession: "+tmp.jSession
-				+"\nfriendlyName: "+tmp.friendlyName
-				+"\nlastActivity: "+tmp.lastActivity); //*/
+				+"\nlastActivity: "+tmp.lastActivity
+				+"\nemail: "+tmp.email
+				+"\nfriendlyName: "+tmp.friendlyName); //*/
 		// try to get a new session Id until succeed
 		boolean done = false;
 		while (!done){
 			// randomly guess a new session id
 			tmp.sessionId = randomSessionId(20);
 			//System.out.println("rndSessionId: "+tmp.sessionId);
-			// check for collision
-			GetAttributesResult existing = sdb.get().getAttributes(new GetAttributesRequest()
-					.withDomainName("ImgEvo_sessions")
-					.withItemName(tmp.sessionId)
-					.withConsistentRead(true));
 			// create update request
 			PutAttributesRequest putReq = new PutAttributesRequest();
-			// set new values
+			// set session parameters
 			putReq = putReq.withDomainName("ImgEvo_sessions").withItemName(tmp.sessionId);
 			putReq = putReq.withAttributes(new ReplaceableAttribute("userId",tmp.userId,true));
 			putReq = putReq.withAttributes(new ReplaceableAttribute("jSession",tmp.jSession,true));
-			putReq = putReq.withAttributes(new ReplaceableAttribute("userName",tmp.userName,true));
-			putReq = putReq.withAttributes(new ReplaceableAttribute("friendlyName",
-					tmp.friendlyName,true));
 			putReq = putReq.withAttributes(new ReplaceableAttribute("lastActivity",
 					Long.toString(tmp.lastActivity.getTime()),true));
+			if (tmp.friendlyName !=null && !tmp.friendlyName.equals("")){
+				putReq = putReq.withAttributes(new ReplaceableAttribute("email",tmp.email,true));
+			}
+			if (tmp.friendlyName !=null && !tmp.friendlyName.equals("")){
+				putReq = putReq.withAttributes(new ReplaceableAttribute("friendlyName",
+						tmp.friendlyName,true));
+			}
+
+			
 			// set update conditions assuming no existing
 			putReq = putReq.withExpected(new UpdateCondition().withName("userId").withExists(false));
-			putReq = putReq.withExpected(new UpdateCondition().withName("userName").withExists(false));
 			putReq = putReq.withExpected(new UpdateCondition().withName("userjSession").withExists(false));
-			// loop through existing and set expected values
-			for (Attribute a : existing.getAttributes()){
-				//System.out.print("set expected attributes ");
-				if (a.getName().equals("userId")){
-					//System.out.println("- userId - ex="+a.getValue());
-					putReq = putReq.withExpected(new UpdateCondition("userId", a.getValue(), true));
-				} else if (a.getName().equals("userName")){
-					//System.out.println("- userName - ex="+a.getValue());
-					putReq = putReq.withExpected(new UpdateCondition("userName", a.getValue(), true));
-				} else if (a.getName().equals("jSession")){
-					//System.out.println("- jSession - ex="+a.getValue());
-					putReq = putReq.withExpected(new UpdateCondition("jSession", a.getValue(), true));
-				}
-			}
 			// make update
 			sdb.get().putAttributes(putReq);
 			// check update success
-			existing = sdb.get().getAttributes(new GetAttributesRequest()
+			GetAttributesResult existing = sdb.get().getAttributes(new GetAttributesRequest()
 					.withDomainName("ImgEvo_sessions")
 					.withItemName(tmp.sessionId)
+					.withAttributeNames("userId")
+					.withAttributeNames("jSession")
 					.withConsistentRead(true));
 			done = !existing.getAttributes().isEmpty();
 			//System.out.println(" checking exising.attributes !empty - done="+done);
@@ -159,10 +150,6 @@ public class SessionManagement {
 					//System.out.print("- userId - ");
 					//System.out.print(a.getValue()+" = "+tmp.userId+" >> "+a.getValue().equals(tmp.userId));
 					done = (done) ? a.getValue().equals(tmp.userId) : false;
-				} else if (a.getName().equals("userName")){ 
-					//System.out.print("- userName - ");
-					//System.out.print(a.getValue()+" = "+tmp.userName+" >> "+a.getValue().equals(tmp.userName));
-					done = (done) ? a.getValue().equals(tmp.userName) : false;
 				} else if (a.getName().equals("jSession")){ 
 					//System.out.print("- jSession - ");
 					//System.out.print(a.getValue()+" = "+tmp.jSession+" >> "+a.getValue().equals(tmp.jSession));
@@ -194,18 +181,22 @@ public class SessionManagement {
 	
 	/** makes or updates a user from session information
 	 * @param userId
-	 * @param userName
+	 * @param email
 	 * @param friendlyName
 	 */
-	public static void makeUser(String userId, String userName, String friendlyName){
+	public static void makeUser(String userId, String email, String friendlyName){
 		// create update request
 		PutAttributesRequest putReq = new PutAttributesRequest();
 		// set new values
 		putReq = putReq.withDomainName("ImgEvo_users").withItemName(userId);
-		putReq = putReq.withAttributes(new ReplaceableAttribute("userName",userName,true));
-		putReq = putReq.withAttributes(new ReplaceableAttribute("friendlyName",friendlyName,true));
+		if(email!=null && !email.equals("")){
+			putReq = putReq.withAttributes(new ReplaceableAttribute("email",email,true));
+		}
+		if(friendlyName!=null && !friendlyName.equals("")){
+			putReq = putReq.withAttributes(new ReplaceableAttribute("friendlyName",friendlyName,true));
+		}
 		//putReq = putReq.withAttributes(new ReplaceableAttribute("canEvoRequest","true",true));
-		//putReq = putReq.withExpected(new UpdateCondition().withName("userName").withExists(false));
+		//putReq = putReq.withExpected(new UpdateCondition().withName("email").withExists(false));
 		// make update
 		sdb.get().putAttributes(putReq);
 	}
@@ -350,7 +341,7 @@ public class SessionManagement {
 		}
 		return (matchSession && matchUser) ? rtn : null;
 	}
-	public static String getValidUserName(String cookie){
+	public static String getValidEmail(String cookie){
 		boolean matchSession=false, matchUser=false;
 		String rtn=null;
 		String[] parts = cookie.split("_", 2);
@@ -366,7 +357,7 @@ public class SessionManagement {
 				.withDomainName("ImgEvo_sessions")
 				.withItemName(tmp.sessionId)
 				.withAttributeNames("userId")
-				.withAttributeNames("userName")
+				.withAttributeNames("email")
 				.withConsistentRead(true));
 		// validate against session
 		matchSession = !existing.getAttributes().isEmpty();
@@ -374,7 +365,7 @@ public class SessionManagement {
 			if (a.getName().equals("userId")){ 
 				matchUser = a.getValue().equals(tmp.userId);
 				rtn = a.getValue();
-			} else if (a.getName().equals("userName")){
+			} else if (a.getName().equals("email")){
 				rtn = a.getValue();
 			}
 			
