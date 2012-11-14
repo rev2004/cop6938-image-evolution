@@ -53,8 +53,7 @@ public class SessionManagement {
 	private static final ThreadLocal<AmazonSimpleDBClient> sdb = new ThreadLocal<AmazonSimpleDBClient>() {
 		@Override protected AmazonSimpleDBClient initialValue() { 
 			try {
-				AWSCredentials cred;
-				cred = new PropertiesCredentials(
+				AWSCredentials cred = new PropertiesCredentials(
 				        SessionManagement.class.getClassLoader()
 				        .getResourceAsStream("AwsCredentials.properties"));
 				return new AmazonSimpleDBClient(cred);
