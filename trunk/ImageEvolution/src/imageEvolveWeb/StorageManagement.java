@@ -1,15 +1,22 @@
 package imageEvolveWeb;
 
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.Date;
 import java.util.Random;
 
+import javax.imageio.ImageIO;
+
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.io.output.ByteArrayOutputStream;
 
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.PropertiesCredentials;
 import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.simpledb.AmazonSimpleDBClient;
 import com.amazonaws.services.simpledb.model.Attribute;
 import com.amazonaws.services.simpledb.model.GetAttributesRequest;
@@ -48,7 +55,6 @@ public class StorageManagement {
 	/** Simple Storage Service connection;
 	 * Thread local used to prevent blocking when threads concurrent.
 	 */
-	@SuppressWarnings("unused")
 	private static final ThreadLocal<AmazonS3Client> s3 = new ThreadLocal<AmazonS3Client>() {
 		@Override protected AmazonS3Client initialValue() { 
 			try {
@@ -78,7 +84,7 @@ public class StorageManagement {
 		String imageId = null;
 		while (!done){
 			// randomly guess a new session id
-			imageId = randomImageId(18)+suffix;
+			imageId = randomImageId(18)+((suffix!=null)?suffix:"");
 			String created = Long.toString((new Date()).getTime());
 			//System.out.println("rndSessionId: "+tmp.sessionId);
 			// create update request
@@ -149,6 +155,29 @@ public class StorageManagement {
 			return null;
 		}
 	}
+	
+	public static InputStream getImage(String imgKey){
+		return s3.get().getObject("ImgEvo",imgKey).getObjectContent();
+	}
+	public static boolean storeImage(String imgKey, BufferedImage img){
+		try {
+			// write image data in memory
+			ByteArrayOutputStream imgOutput = new ByteArrayOutputStream();
+			ImageIO.write(img, "png", imgOutput);
+			ByteArrayInputStream s3Input = new ByteArrayInputStream(imgOutput.toByteArray());
+			// set file metadata
+			ObjectMetadata fileMeta = new ObjectMetadata();
+			fileMeta.setContentType("image/png");
+			fileMeta.setContentLength(s3Input.available());
+			// upload
+			s3.get().putObject("ImgEvo", imgKey, s3Input, fileMeta);
+			return true;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+	
 	
 	
 }

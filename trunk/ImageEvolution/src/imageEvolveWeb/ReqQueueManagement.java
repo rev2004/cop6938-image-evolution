@@ -8,6 +8,7 @@ import org.json.JSONObject;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.PropertiesCredentials;
 import com.amazonaws.services.sqs.AmazonSQSClient;
+import com.amazonaws.services.sqs.model.DeleteMessageRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
@@ -34,7 +35,7 @@ public class ReqQueueManagement {
 	
 	
 	/* instance variables */
-	public String imageId;		// ImageId and base ID for evolved and genetic outputs
+	public String imageId;		// ImageId and base Id for evolved and genetic outputs
 	public String targetId;		// Target image if different than Id
 	public String baseGen;		// first generation starting DNA
 	public double fitThresh;	// threshold fitness once exceeded can finish
@@ -42,6 +43,7 @@ public class ReqQueueManagement {
 	public boolean strictThresh;	// strict threshold, both fitness and generation
 									//thresholds must be satisfied before completion
 									//Otherwise only one.
+	public String receiptHandle; // SQS receiptHandle, used to clear the message from queue after completed
 	
 	
 	public ReqQueueManagement(){
@@ -51,6 +53,7 @@ public class ReqQueueManagement {
 		fitThresh=0.0;
 		genThresh=0;
 		strictThresh=false;
+		receiptHandle=null;
 	}
 	
 	public JSONObject createMsg(){
@@ -78,6 +81,14 @@ public class ReqQueueManagement {
 		tmp.strictThresh = msg.optBoolean("strictThresh");
 		return tmp;
 	}
+	public static ReqQueueManagement parseMsg(String msg){
+		try {
+			return parseMsg(new JSONObject(msg));
+		} catch (JSONException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
 
 	public void sendSqsMsg(){
 		sqs.get().sendMessage(new SendMessageRequest(sqsQueueUrl, 
@@ -89,7 +100,8 @@ public class ReqQueueManagement {
 	 retrieve requests after being retrieved by a ReceiveMessage request.
 	 * @return
 	 */
-	public static String recvSqsMsg(int visTimeout){
+	public static ReqQueueManagement recvSqsMsg(int visTimeout){
+		ReqQueueManagement tmp = null;
 		ReceiveMessageRequest req = new ReceiveMessageRequest();
 		req = req.withQueueUrl(ReqQueueManagement.sqsQueueUrl);
 		req = req.withMaxNumberOfMessages(1);
@@ -98,16 +110,31 @@ public class ReqQueueManagement {
 		ReceiveMessageResult recv=null;
 		// Loop until messages appear
 		// 10 second msg wait + 20 second sleep = 30 second each loop
-		do {
-			// wait for 20 seconds
-			try { Thread.sleep(20000); } catch (InterruptedException e) {}  
+		for (int i=0; i<4; i++) {
 			recv = sqs.get().receiveMessage(req);
 			if(!recv.getMessages().isEmpty()){
 				break;
 			}
-		} while (true); 
-		return recv.getMessages().get(0).getBody();
+			// wait for 20 seconds
+			try { Thread.sleep(20000); } catch (InterruptedException e) {}  
+		};
+		// check if 
+		if (!recv.getMessages().isEmpty()){
+			tmp = parseMsg(recv.getMessages().get(0).getBody());
+			tmp.receiptHandle = recv.getMessages().get(0).getReceiptHandle();
+			return tmp;
+		} else {
+			return null;
+		}
 	}
+	
+	public static void delSqsMsg(String receiptHandle){
+		DeleteMessageRequest del = new DeleteMessageRequest()
+			.withQueueUrl(ReqQueueManagement.sqsQueueUrl)
+			.withReceiptHandle(receiptHandle);
+		sqs.get().deleteMessage(del);
+	}
+	
 	
 	@SuppressWarnings("unused")
 	private static String getQueueUrl(String QueueName){
