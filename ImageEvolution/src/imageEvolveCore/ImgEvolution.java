@@ -167,7 +167,6 @@ public class ImgEvolution implements Runnable{
 			// compare fitness of next against best
 			if(test.fitness > this.best.fitness){
 				this.best = test;
-				//evolveOutput(startTime, cntGen);
 			}
 			cntGen++;
 		}
@@ -203,7 +202,6 @@ public class ImgEvolution implements Runnable{
 			if( this.best==null ||
 					this.population[this.control.population-1].fitness > this.best.fitness){
 				this.best = this.population[this.control.population-1];
-				//evolveOutput(startTime, cntGen);
 			}
 			// create next population
 			this.nextGeneration();
@@ -339,6 +337,14 @@ public class ImgEvolution implements Runnable{
 		}
 		
 	}
+	
+	public EvoImg getBest(){
+		return best;
+	}
+	public BufferedImage getBestImg(){
+		return best.image;
+	}
+	
 	
 	/* Runnable implementation */
 	/** implementation of Runnable.

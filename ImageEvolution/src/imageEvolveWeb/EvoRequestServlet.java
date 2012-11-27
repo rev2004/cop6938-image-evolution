@@ -104,13 +104,21 @@ public class EvoRequestServlet extends HttpServlet {
 		// if a target provided and size is less than 1MiB
 		if(targetImage!=null && targetSize>0 && targetSize<=1048576){
 			// get image Id and setup in simpleDB
-			String fileKey = StorageManagement.allocateImageId("_o", null, user.get("itemName"), name, description );
+			String fileKey = StorageManagement.allocateImageId(null, null, user.get("itemName"), name, description)+"_o";
 			// upload file to S3
 			ObjectMetadata fileMeta = new ObjectMetadata();
 			fileMeta.setContentType(targetType);
 			fileMeta.setContentLength(targetSize);
-			s3.get().putObject("ImgEvo", fileKey, targetImage, fileMeta);			
+			s3.get().putObject("ImgEvo", fileKey, targetImage, fileMeta);
 			// issue request to SQS
+			ReqQueueManagement sqsReq = new ReqQueueManagement();
+			sqsReq.imageId = fileKey;
+			sqsReq.targetId = fileKey;
+			sqsReq.baseGen = null;
+			sqsReq.fitThresh = 0.7;
+			sqsReq.genThresh = 1000;
+			sqsReq.strictThresh = false;
+			sqsReq.sendSqsMsg();
 			
 		} else {
 			System.out.println("targetImage check failed -  targ!=null"+(targetImage!=null)+"  size>0MiB"+(targetSize>0)+"  size<=1MiB:"+(targetSize<=1048576));
