@@ -38,8 +38,10 @@ public class EvolutionManager implements Runnable{
 			}
 		}
 	};
+	
+	private static final boolean ALWAYS_SLEEP = true;
 
-	private static class EvoJob{
+	protected static class EvoJob{
 		public Thread thread;
 		public ImgEvolution evo;
 		public EvoJob(){
@@ -58,39 +60,56 @@ public class EvolutionManager implements Runnable{
 		jobs = new EvoJob[maxJobs];
 	}
 
+	
 	@Override
 	public void run() {
 		while(true){
 			for (int i=0; i<jobs.length; i++){
+				boolean jobStarted = false;
 				// if empty, get a new job off the queue
 				if (jobs[i]==null){
+					System.out.println("EvoMgr-run: empty slot, i="+i);
 					// get job and run
 					jobs[i] = getQueueJob();
+					System.out.println("EvoMgr-run: gotjob, not_null="+jobs[i]!=null);
 					if (jobs[i]!=null){
+						System.out.println("EvoMgr-run: start job");
 						jobs[i].thread.start();
+						jobStarted = true;
 					}	
 				}
 				// if terminated, store result get new job
 				else if(!jobs[i].thread.isAlive()){
+					System.out.println("EvoMgr-run: finished job slot, i="+i);
 					// store result of job
 					storeJobResult(jobs[i].evo);
+					System.out.println("EvoMgr-run: result stored");
 					// get new job and run
 					jobs[i] = getQueueJob();
+					System.out.println("EvoMgr-run: gotjob, not_null="+jobs[i]!=null);
 					if (jobs[i]!=null){
+						System.out.println("EvoMgr-run: start job");
 						jobs[i].thread.start();
+						jobStarted = true;
 					}
 				}
-				// sleep for a minute before trying another
-				try { Thread.sleep(60000); } catch (InterruptedException ex) {}
+				// if a job was started wait before running again
+				if (jobStarted || ALWAYS_SLEEP){
+					System.out.println("EvoMgr-run: sleep 60 sec");
+					// sleep for a minute before trying another
+					try { Thread.sleep(60000); } catch (InterruptedException ex) {}
+				}
 			}
 		}
 	}
 
-	private boolean storeJobResult(ImgEvolution evo){
+	protected static boolean storeJobResult(ImgEvolution evo){
 		// output generated image to S3
 		boolean done = !StorageManagement.storeImage(evo.outImg+"_r", evo.getBestImg());
+		System.out.println("EvoMgr-storeJobResult: image stored done="+done);
 		// write result back to SimpleDB
 		while (!done){
+			System.out.println("EvoMgr-storeJobResult: !done loop");
 			// create base request
 			PutAttributesRequest putReq = new PutAttributesRequest();
 			putReq = putReq.withDomainName("ImgEvo_images").withItemName(evo.outImg);
@@ -103,6 +122,7 @@ public class EvolutionManager implements Runnable{
 				.withConsistentRead(true));
 			// set update condition to prevent overwriting existing image
 			putReq = putReq.withExpected(new UpdateCondition().withName("fitness").withExists(false));
+			System.out.println("EvoMgr-storeJobResult: got previous");
 			for(Attribute a : existing.getAttributes()){
 				if(a.getName().equals("fitness")){
 					// if current fitness greater, overwrite (conditionally)
@@ -111,54 +131,72 @@ public class EvolutionManager implements Runnable{
 							.withName("fitness")
 							.withValue(a.getValue())
 							.withExists(true));
+						System.out.println("EvoMgr-storeJobResult: lesser previous fitness found old="+a.getValue()+" new="+Double.toString(evo.getBest().getFitness()));
 					}
 					// weird race conditions have happened break out and do nothing
 					else {
 						done = true;
+						System.out.println("EvoMgr-storeJobResult: existing fitness greater old="+a.getValue()+" new="+Double.toString(evo.getBest().getFitness()));
 					}
 					
 				}
 			}
 			// if still valid
 			if (!done){
+				System.out.println("EvoMgr-storeJobResult: !done, put update");
 				// make update
 				sdb.get().putAttributes(putReq);
+				System.out.println("EvoMgr-storeJobResult: !done, put update done");
 			}
-			
+			System.out.println("EvoMgr-storeJobResult: get existing");
 			// check update success/validity
 			existing = sdb.get().getAttributes(new GetAttributesRequest()
 				.withDomainName("ImgEvo_images").withItemName(evo.outImg)
 				.withAttributeNames("fitness")
 				.withConsistentRead(true));
+			System.out.println("EvoMgr-storeJobResult: got existing");
 			for(Attribute a : existing.getAttributes()){
 				if(a.getName().equals("fitness")){
 					// if current fitness greater, overwrite (conditionally)
+					System.out.println("EvoMgr-storeJobResult: fitness attribute found");
 					if (evo.getBest().getFitness() <= Double.parseDouble(a.getValue())){
+						System.out.println("EvoMgr-storeJobResult: existing fit >= this fitness - this="+evo.getBest().getFitness()+" existing="+Double.parseDouble(a.getValue()));
 						// update was successful or already bested
 						done = true;
 					}
 				}
 			}
 		}
+		System.out.println("EvoMgr-storeJobResult: remove queue record");
 		// remove from queue
 		ReqQueueManagement.delSqsMsg(evo.control.receiptHandle);
+		System.out.println("EvoMgr-storeJobResult: return");
 		return true;
 	}
 
-
-	private EvoJob getQueueJob(){
+	protected static EvoJob getQueueJob(){
 		// make temporary job object
 		EvoJob tmp = new EvoJob();
+		System.out.println("EvoMgr-getQueueJob: made new tmp EvoJob");
 		// get message from queue (may wait a long time for a queue message)
+		System.out.println("EvoMgr-getQueueJob: do recv msgs");
 		ReqQueueManagement req = ReqQueueManagement.recvSqsMsg(900);
+		System.out.println("EvoMgr-getQueueJob: recvd msg msg not_null="+req!=null);
+		System.out.println("EvoMgr-getQueueJob: get target image from s3");
 		// get target image
 		InputStream imgS3 = StorageManagement.getImage(
 				(req.targetId==null||req.targetId.length()<1)?req.imageId+"_o":req.targetId);
+		System.out.println("EvoMgr-getQueueJob: target img not_null="+imgS3!=null);
+		System.out.println("EvoMgr-getQueueJob: make new ImgEvolution in tmp");
 		// make a EvoControl and ImgEvolution
 		tmp.evo = new ImgEvolution("evo");
+		System.out.println("EvoMgr-getQueueJob: made new ImgEvolution in tmp");
 		try {
+			System.out.println("EvoMgr-getQueueJob: read s3 file");
 			tmp.evo.sourceImg = ImageIO.read(imgS3);
+			System.out.println("EvoMgr-getQueueJob: s3 file read - close s3 file");
 			imgS3.close();
+			System.out.println("EvoMgr-getQueueJob: s3 file closed");
 			tmp.evo.outImg = req.imageId;
 			tmp.evo.control.size_x = tmp.evo.sourceImg.getWidth();
 			tmp.evo.control.size_y = tmp.evo.sourceImg.getHeight();
@@ -178,7 +216,9 @@ public class EvolutionManager implements Runnable{
 			tmp.evo.control.threshold = req.fitThresh;
 			tmp.evo.control.maxGenerations = req.genThresh;
 			tmp.evo.control.receiptHandle = req.receiptHandle;
+			System.out.println("EvoMgr-getQueueJob: make thread");
 			tmp.thread = new Thread(tmp.evo);
+			System.out.println("EvoMgr-getQueueJob: return tmp");
 			return tmp;
 		} catch (IOException e1) {
 			e1.printStackTrace();

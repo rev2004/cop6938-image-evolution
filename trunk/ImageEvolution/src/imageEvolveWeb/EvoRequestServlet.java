@@ -118,7 +118,7 @@ public class EvoRequestServlet extends HttpServlet {
 			sqsReq.fitThresh = 0.7;
 			sqsReq.genThresh = 1000;
 			sqsReq.strictThresh = false;
-			sqsReq.sendSqsMsg();
+			ReqQueueManagement.sendSqsMsg(sqsReq);
 			
 		} else {
 			System.out.println("targetImage check failed -  targ!=null"+(targetImage!=null)+"  size>0MiB"+(targetSize>0)+"  size<=1MiB:"+(targetSize<=1048576));
