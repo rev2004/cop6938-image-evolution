@@ -2,6 +2,7 @@ package imageEvolveWeb;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.URLEncoder;
 import java.util.List;
 
 import javax.servlet.ServletConfig;
@@ -11,6 +12,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.net.URLCodec;
 import org.openid4java.OpenIDException;
 import org.openid4java.consumer.ConsumerManager;
 import org.openid4java.consumer.VerificationResult;
@@ -36,7 +39,7 @@ public class LoginServlet extends HttpServlet {
 	
 	// configure the return_to URL where your application will receive
 	// the authentication responses from the OpenID provider
-	public final String returnToUrl = "http://localhost:8080/ImageEvolution/loginServlet";
+	public final String baseReturnUrl = "http://localhost:8080/ImageEvolution/loginServlet";
 	
 	
 	public void init(ServletConfig config) throws ServletException {
@@ -55,6 +58,21 @@ public class LoginServlet extends HttpServlet {
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		Identifier identifier = this.verifyResponse(request);
 		if (identifier != null) {
+			
+			// Get return URL
+			String retUrl = request.getParameter("retURL");
+			System.out.println(retUrl);
+			if(retUrl!=null){
+				try {
+					retUrl = (new URLCodec()).decode(retUrl);
+				} catch (DecoderException e) {
+					e.printStackTrace();
+				}
+			} else {
+				retUrl = "index.jsp";
+			}
+			System.out.println(retUrl);
+			
 			
 			/*response.setContentType("text/html");
 			PrintWriter out = response.getWriter();
@@ -81,8 +99,8 @@ public class LoginServlet extends HttpServlet {
 			//authCookie.setSecure(true);
 			response.addCookie(authCookie);
 			
-			// redirect to dashboard
-			response.sendRedirect("index.jsp");
+			// redirect user back to page
+			response.sendRedirect(retUrl);
 			
 		} 
 		// Authentication verification failed, notify user
@@ -111,6 +129,23 @@ public class LoginServlet extends HttpServlet {
 	// --- placing the authentication request ---
 	public String authRequest(String userSuppliedString, HttpServletRequest httpReq, HttpServletResponse httpResp) throws IOException {
 		try {
+			
+			// Get return URL
+			String retUrl = httpReq.getParameter("retURL");
+			System.out.println(retUrl);
+			retUrl = URLEncoder.encode(retUrl, "UTF-8");
+			/*if(retUrl!=null){
+				try {
+					retUrl = (new URLCodec()).encode(retUrl);
+				} catch (EncoderException e) {
+					e.printStackTrace();
+				}
+			}*/
+			retUrl = (retUrl!=null && retUrl.length()>0) ? 
+					baseReturnUrl+"?"+retUrl+"&" : baseReturnUrl;
+			
+			System.out.println(retUrl);
+			
 			/* --- Forward proxy setup (only if needed) ---
 			ProxyProperties proxyProps = new ProxyProperties();
 			proxyProps.setProxyName("proxy.example.com");
@@ -130,7 +165,7 @@ public class LoginServlet extends HttpServlet {
 			httpReq.getSession().setAttribute("openid-disc", discovered);
 			
 			// obtain a AuthRequest message to be sent to the OpenID provider
-			AuthRequest authReq = manager.authenticate(discovered, returnToUrl);
+			AuthRequest authReq = manager.authenticate(discovered, retUrl);
 			
 			// Attribute Exchange example: fetching the 'email' attribute
 			FetchRequest fetch = FetchRequest.createFetchRequest();

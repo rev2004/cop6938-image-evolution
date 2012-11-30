@@ -9,6 +9,8 @@
 <%@ page import="com.amazonaws.services.s3.model.*" %>
 <%@ page import="com.amazonaws.services.simpledb.*" %>
 <%@ page import="com.amazonaws.services.simpledb.model.*" %>
+<%@ page import="org.apache.commons.codec.EncoderException" %>
+<%@ page import="org.apache.commons.codec.net.URLCodec" %>
 
 
 
@@ -43,9 +45,25 @@
     }
 %>
 
-
 <%	// test getting SessionManagement cookie and session
-	Map<String,String> user= SessionManagement.getUser(request.getCookies());
+	Map<String,String> user = SessionManagement.getUser(request.getCookies());
+	// if user not validated, redirect to login
+	if (user == null){
+		// set the current url to be the return url
+		String retUrl = request.getRequestURI();
+		try {
+			retUrl = (new URLCodec()).encode(retUrl);
+		} catch (EncoderException e) {
+			e.printStackTrace();
+			retUrl = null;
+		}
+		// if return url valid, add to redirect to login page
+		if (retUrl!=null && retUrl.length()>0){
+			response.sendRedirect("login.jsp?retURL="+request.getRequestURI());
+		} else {
+			response.sendRedirect("login.jsp");
+		}
+	}
 %>
 
 <!DOCTYPE html>
@@ -56,9 +74,9 @@
     <link rel="stylesheet" href="styles/styles.css" type="text/css" media="screen">
 </head>
 <body>
-	<div style="padding:2px;border:1px solid red;">userName= <%= user.get("email") %></div>
+	<div style="padding:2px;border:1px solid red;">userName= <%= (user!=null)?user.get("email"):"null" %></div>
 	<div id="page intro">
-		Hello <%= user.get("friendlyName") %>!
+		Hello <%= (user!=null)?user.get("friendlyName"):"null" %>!
 	</div>
 	
     <div id="content" class="container">
