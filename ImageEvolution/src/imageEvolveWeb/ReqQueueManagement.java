@@ -90,9 +90,9 @@ public class ReqQueueManagement {
 		}
 	}
 
-	public void sendSqsMsg(){
+	public static void sendSqsMsg(ReqQueueManagement req){
 		sqs.get().sendMessage(new SendMessageRequest(sqsQueueUrl, 
-				this.createMsg().toString()));
+				req.createMsg().toString()));
 	}
 	
 	/**
@@ -135,14 +135,11 @@ public class ReqQueueManagement {
 		sqs.get().deleteMessage(del);
 	}
 	
-	
 	@SuppressWarnings("unused")
 	private static String getQueueUrl(String QueueName){
 		//ListQueuesResult qlist = sqs.get().listQueues(new ListQueuesRequest(QueueName));
 		//qlist.
 		return null;
 	}
-	
-	
 	
 }

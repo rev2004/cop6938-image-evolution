@@ -39,4 +39,14 @@
     <servlet-name>evoRequestServlet</servlet-name>
     <url-pattern>/evoRequestServlet</url-pattern>
   </servlet-mapping>
+  <servlet>
+    <description>test running the evo manager and core</description>
+    <display-name>TestEvoCoreServlet</display-name>
+    <servlet-name>TestEvoCoreServlet</servlet-name>
+    <servlet-class>imageEvolveWeb.TestEvoCoreServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>TestEvoCoreServlet</servlet-name>
+    <url-pattern>/TestEvoCoreServlet</url-pattern>
+  </servlet-mapping>
 </web-app>
