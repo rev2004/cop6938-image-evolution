@@ -251,36 +251,53 @@ public class SessionManagement {
 	}
 	
 	public static Map<String,String> getUser(Cookie[] C){
-		for(Cookie c : C){
-			if(c.getName().equals("authToken")){
-				return getUser(c);
+		if(C!=null){
+			for(Cookie c : C){
+				if(c.getName().equals("authToken")){
+					return getUser(c);
+				}
 			}
 		}
 		return null;
 	}
 	public static Map<String,String> getUser(Cookie c){
-		return getUser(c.getValue());
+		if (c!=null){
+			return getUser(c.getValue());
+		} else {
+			return null;
+		}
 	}
 	public static Map<String,String> getUser(String authToken){
-		String userId = SessionManagement.getValidUserId(authToken);
-		GetAttributesResult existing = sdb.get().getAttributes(new GetAttributesRequest()
-		.withDomainName("ImgEvo_users")
-		.withItemName(userId)
-		.withConsistentRead(true));
-		// put attributes into a map
-		Map<String, String> userRec = Attrb2Map(existing.getAttributes());
-		// make SURE that itemName is in the map and also replicate as userId for fun
-		userRec.put("itemName", userId);
-		userRec.put("userId", userId);
-		//return map
-		return userRec;
+		if(authToken!=null){
+			String userId = SessionManagement.getValidUserId(authToken);
+			if(userId==null){
+				return null;
+			}
+			GetAttributesResult existing = sdb.get().getAttributes(new GetAttributesRequest()
+			.withDomainName("ImgEvo_users")
+			.withItemName(userId)
+			.withConsistentRead(true));
+			// put attributes into a map
+			Map<String, String> userRec = Attrb2Map(existing.getAttributes());
+			// make SURE that itemName is in the map and also replicate as userId for fun
+			userRec.put("itemName", userId);
+			userRec.put("userId", userId);
+			//return map
+			return userRec;
+		} else {
+			return null;
+		}
 	}
 	public static Map<String,String> Attrb2Map(List<Attribute> A){
-		Map<String,String> tmp = new HashMap<String,String>();
-		for (Attribute a : A){
-			tmp.put(a.getName(), a.getValue());
+		if(A!=null){
+			Map<String,String> tmp = new HashMap<String,String>();
+			for (Attribute a : A){
+				tmp.put(a.getName(), a.getValue());
+			}
+			return tmp;
+		} else {
+			return null;
 		}
-		return tmp;
 	}
 
 	public static String getValidSessionId(String cookie){
