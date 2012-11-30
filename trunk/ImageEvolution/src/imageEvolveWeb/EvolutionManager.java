@@ -71,7 +71,7 @@ public class EvolutionManager implements Runnable{
 					System.out.println("EvoMgr-run: empty slot, i="+i);
 					// get job and run
 					jobs[i] = getQueueJob();
-					System.out.println("EvoMgr-run: gotjob, not_null="+jobs[i]!=null);
+					System.out.println("EvoMgr-run: gotjob, not_null="+(jobs[i]!=null));
 					if (jobs[i]!=null){
 						System.out.println("EvoMgr-run: start job");
 						jobs[i].thread.start();
@@ -86,7 +86,7 @@ public class EvolutionManager implements Runnable{
 					System.out.println("EvoMgr-run: result stored");
 					// get new job and run
 					jobs[i] = getQueueJob();
-					System.out.println("EvoMgr-run: gotjob, not_null="+jobs[i]!=null);
+					System.out.println("EvoMgr-run: gotjob, not_null="+(jobs[i]!=null));
 					if (jobs[i]!=null){
 						System.out.println("EvoMgr-run: start job");
 						jobs[i].thread.start();
@@ -175,23 +175,24 @@ public class EvolutionManager implements Runnable{
 	}
 
 	protected static EvoJob getQueueJob(){
-		// make temporary job object
-		EvoJob tmp = new EvoJob();
-		System.out.println("EvoMgr-getQueueJob: made new tmp EvoJob");
-		// get message from queue (may wait a long time for a queue message)
-		System.out.println("EvoMgr-getQueueJob: do recv msgs");
-		ReqQueueManagement req = ReqQueueManagement.recvSqsMsg(900);
-		System.out.println("EvoMgr-getQueueJob: recvd msg msg not_null="+req!=null);
-		System.out.println("EvoMgr-getQueueJob: get target image from s3");
-		// get target image
-		InputStream imgS3 = StorageManagement.getImage(
-				(req.targetId==null||req.targetId.length()<1)?req.imageId+"_o":req.targetId);
-		System.out.println("EvoMgr-getQueueJob: target img not_null="+imgS3!=null);
-		System.out.println("EvoMgr-getQueueJob: make new ImgEvolution in tmp");
-		// make a EvoControl and ImgEvolution
-		tmp.evo = new ImgEvolution("evo");
-		System.out.println("EvoMgr-getQueueJob: made new ImgEvolution in tmp");
 		try {
+			// make temporary job object
+			EvoJob tmp = new EvoJob();
+			System.out.println("EvoMgr-getQueueJob: made new tmp EvoJob");
+			// get message from queue (may wait a long time for a queue message)
+			System.out.println("EvoMgr-getQueueJob: do recv msgs");
+			ReqQueueManagement req = ReqQueueManagement.recvSqsMsg(900);
+			System.out.println("EvoMgr-getQueueJob: recvd msg, msg not_null="+(req!=null));
+			System.out.println("EvoMgr-getQueueJob: get target image from s3");
+			// get target image
+			InputStream imgS3 = StorageManagement.getImage(
+					(req.targetId==null||req.targetId.length()<1)?req.imageId+"_o":req.targetId);
+			System.out.println("EvoMgr-getQueueJob: target img not_null="+imgS3!=null);
+			System.out.println("EvoMgr-getQueueJob: make new ImgEvolution in tmp");
+			// make a EvoControl and ImgEvolution
+			tmp.evo = new ImgEvolution("evo");
+			System.out.println("EvoMgr-getQueueJob: made new ImgEvolution in tmp");
+			
 			System.out.println("EvoMgr-getQueueJob: read s3 file");
 			tmp.evo.sourceImg = ImageIO.read(imgS3);
 			System.out.println("EvoMgr-getQueueJob: s3 file read - close s3 file");
@@ -220,7 +221,7 @@ public class EvolutionManager implements Runnable{
 			tmp.thread = new Thread(tmp.evo);
 			System.out.println("EvoMgr-getQueueJob: return tmp");
 			return tmp;
-		} catch (IOException e1) {
+		} catch (Exception e1) {
 			e1.printStackTrace();
 			return null;
 		}
