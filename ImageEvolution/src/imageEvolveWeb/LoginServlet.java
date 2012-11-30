@@ -2,7 +2,6 @@ package imageEvolveWeb;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.net.URLEncoder;
 import java.util.List;
 
 import javax.servlet.ServletConfig;
@@ -12,8 +11,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.codec.DecoderException;
-import org.apache.commons.codec.net.URLCodec;
 import org.openid4java.OpenIDException;
 import org.openid4java.consumer.ConsumerManager;
 import org.openid4java.consumer.VerificationResult;
@@ -59,21 +56,6 @@ public class LoginServlet extends HttpServlet {
 		Identifier identifier = this.verifyResponse(request);
 		if (identifier != null) {
 			
-			// Get return URL
-			String retUrl = request.getParameter("retURL");
-			System.out.println(retUrl);
-			if(retUrl!=null){
-				try {
-					retUrl = (new URLCodec()).decode(retUrl);
-				} catch (DecoderException e) {
-					e.printStackTrace();
-				}
-			} else {
-				retUrl = "index.jsp";
-			}
-			System.out.println(retUrl);
-			
-			
 			/*response.setContentType("text/html");
 			PrintWriter out = response.getWriter();
 			out.print("<html><body>");
@@ -95,10 +77,17 @@ public class LoginServlet extends HttpServlet {
 			String cookie = SessionManagement.makeSession(thisUserId, thisJSession,
 					thisEmail, thisFriendlyName).getCookie();
 			Cookie authCookie = new Cookie("authToken",cookie);
-			authCookie.setMaxAge(24*60*60);
+			authCookie.setMaxAge(-1);
 			//authCookie.setSecure(true);
 			response.addCookie(authCookie);
 			
+			// get return URL from cookie if exists
+			String retUrl = "index.jsp";
+			for(Cookie c : request.getCookies()){
+				if (c.getName().equals("retURL")){
+					retUrl = c.getValue();
+				}
+			}
 			// redirect user back to page
 			response.sendRedirect(retUrl);
 			
@@ -130,22 +119,6 @@ public class LoginServlet extends HttpServlet {
 	public String authRequest(String userSuppliedString, HttpServletRequest httpReq, HttpServletResponse httpResp) throws IOException {
 		try {
 			
-			// Get return URL
-			String retUrl = httpReq.getParameter("retURL");
-			System.out.println(retUrl);
-			retUrl = URLEncoder.encode(retUrl, "UTF-8");
-			/*if(retUrl!=null){
-				try {
-					retUrl = (new URLCodec()).encode(retUrl);
-				} catch (EncoderException e) {
-					e.printStackTrace();
-				}
-			}*/
-			retUrl = (retUrl!=null && retUrl.length()>0) ? 
-					baseReturnUrl+"?"+retUrl+"&" : baseReturnUrl;
-			
-			System.out.println(retUrl);
-			
 			/* --- Forward proxy setup (only if needed) ---
 			ProxyProperties proxyProps = new ProxyProperties();
 			proxyProps.setProxyName("proxy.example.com");
@@ -165,7 +138,7 @@ public class LoginServlet extends HttpServlet {
 			httpReq.getSession().setAttribute("openid-disc", discovered);
 			
 			// obtain a AuthRequest message to be sent to the OpenID provider
-			AuthRequest authReq = manager.authenticate(discovered, retUrl);
+			AuthRequest authReq = manager.authenticate(discovered, baseReturnUrl);
 			
 			// Attribute Exchange example: fetching the 'email' attribute
 			FetchRequest fetch = FetchRequest.createFetchRequest();
