@@ -69,8 +69,8 @@ public class TestEvoCoreServlet extends HttpServlet {
 		req.targetId= "canvas.png";
 		req.baseGen = null;
 		req.strictThresh=false;
-		req.fitThresh = 0.80;
-		req.genThresh = 100000;
+		req.fitThresh = 0.75;
+		req.genThresh = 10000;
 		ReqQueueManagement.sendSqsMsg(req);
 		return "testReqCreate";
 	}

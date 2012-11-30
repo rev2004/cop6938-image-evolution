@@ -49,4 +49,7 @@
     <servlet-name>TestEvoCoreServlet</servlet-name>
     <url-pattern>/TestEvoCoreServlet</url-pattern>
   </servlet-mapping>
+  <listener>
+    <listener-class>imageEvolveWeb.EvolutionManagerListener</listener-class>
+  </listener>
 </web-app>
