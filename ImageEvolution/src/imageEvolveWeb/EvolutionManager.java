@@ -105,7 +105,7 @@ public class EvolutionManager implements Runnable{
 
 	protected static boolean storeJobResult(ImgEvolution evo){
 		// output generated image to S3
-		boolean done = !StorageManagement.storeImage(evo.outImg+"_r", evo.getBestImg());
+		boolean done = !ImageManagement.storeImage(evo.outImg+"_r", evo.getBestImg());
 		System.out.println("EvoMgr-storeJobResult: image stored done="+done);
 		// write result back to SimpleDB
 		while (!done){
@@ -185,7 +185,7 @@ public class EvolutionManager implements Runnable{
 			System.out.println("EvoMgr-getQueueJob: recvd msg, msg not_null="+(req!=null));
 			System.out.println("EvoMgr-getQueueJob: get target image from s3");
 			// get target image
-			InputStream imgS3 = StorageManagement.getImage(
+			InputStream imgS3 = ImageManagement.getImage(
 					(req.targetId==null||req.targetId.length()<1)?req.imageId+"_o":req.targetId);
 			System.out.println("EvoMgr-getQueueJob: target img not_null="+imgS3!=null);
 			System.out.println("EvoMgr-getQueueJob: make new ImgEvolution in tmp");

@@ -65,7 +65,7 @@ public class TestEvoCoreServlet extends HttpServlet {
 	}
 	private static String testReqCreate(){
 		ReqQueueManagement req = new ReqQueueManagement();
-		req.imageId=StorageManagement.randomImageId(18);
+		req.imageId=ImageManagement.randomImageId(18);
 		req.targetId= "canvas.png";
 		req.baseGen = null;
 		req.strictThresh=false;

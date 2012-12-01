@@ -3,6 +3,7 @@ package imageEvolveWeb;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.servlet.ServletException;
@@ -104,7 +105,13 @@ public class EvoRequestServlet extends HttpServlet {
 		// if a target provided and size is less than 1MiB
 		if(targetImage!=null && targetSize>0 && targetSize<=1048576){
 			// get image Id and setup in simpleDB
-			String fileKey = StorageManagement.allocateImageId(null, null, user.get("itemName"), name, description)+"_o";
+			String imgKey = ImageManagement.allocateImageId(null, user.get("itemName"));
+			String fileKey = imgKey+"_o";
+			Map<String,String> attributes = new HashMap<String,String>();
+			attributes.put("name", name);
+			attributes.put("description", description);
+			//attributes.put("targetId", null);
+			ImageManagement.setImgMetadata(imgKey, attributes);
 			// upload file to S3
 			ObjectMetadata fileMeta = new ObjectMetadata();
 			fileMeta.setContentType(targetType);
