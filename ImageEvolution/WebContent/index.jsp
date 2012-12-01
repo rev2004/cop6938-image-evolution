@@ -59,7 +59,7 @@
 		}
 		// if return url valid, add to redirect to login page
 		if (retUrl!=null && retUrl.length()>0){
-			response.sendRedirect("login.jsp?retURL="+request.getRequestURI());
+			response.sendRedirect("login.jsp?retURL="+request.getRequestURI()+"?"+request.getQueryString());
 		} else {
 			response.sendRedirect("login.jsp");
 		}
@@ -74,7 +74,11 @@
     <link rel="stylesheet" href="styles/styles.css" type="text/css" media="screen">
 </head>
 <body>
-	<div style="padding:2px;border:1px solid red;">userName= <%= (user!=null)?user.get("email"):"null" %></div>
+	
+	<% if (user!=null) { %>
+		<div style="padding:2px;border:1px solid red;"> <%= user.get("email") %></div>
+    <% } %>
+	
 	<div id="page intro">
 		Hello <%= (user!=null)?user.get("friendlyName"):"null" %>!
 	</div>

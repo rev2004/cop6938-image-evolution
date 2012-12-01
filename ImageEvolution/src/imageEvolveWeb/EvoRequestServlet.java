@@ -98,7 +98,6 @@ public class EvoRequestServlet extends HttpServlet {
 				}
 			}
 		} else{
-			System.out.println("request check failed -  permitted="+(permitted)+"  isMultipart"+(ServletFileUpload.isMultipartContent(request)));
 			success=false;
 		}
 		
@@ -108,8 +107,8 @@ public class EvoRequestServlet extends HttpServlet {
 			String imgKey = ImageManagement.allocateImageId(null, user.get("itemName"));
 			String fileKey = imgKey+"_o";
 			Map<String,String> attributes = new HashMap<String,String>();
-			attributes.put("name", name);
-			attributes.put("description", description);
+			attributes.put("usr_name", name);
+			attributes.put("usr_description", description);
 			//attributes.put("targetId", null);
 			ImageManagement.setImgMetadata(imgKey, attributes);
 			// upload file to S3
@@ -119,16 +118,14 @@ public class EvoRequestServlet extends HttpServlet {
 			s3.get().putObject("ImgEvo", fileKey, targetImage, fileMeta);
 			// issue request to SQS
 			ReqQueueManagement sqsReq = new ReqQueueManagement();
-			sqsReq.imageId = fileKey;
+			sqsReq.imageId = imgKey;
 			sqsReq.targetId = fileKey;
 			sqsReq.baseGen = null;
-			sqsReq.fitThresh = 0.7;
-			sqsReq.genThresh = 1000;
+			sqsReq.fitThresh = 0.85;
+			sqsReq.genThresh = 10000;
 			sqsReq.strictThresh = false;
 			ReqQueueManagement.sendSqsMsg(sqsReq);
-			
 		} else {
-			System.out.println("targetImage check failed -  targ!=null"+(targetImage!=null)+"  size>0MiB"+(targetSize>0)+"  size<=1MiB:"+(targetSize<=1048576));
 			success = false;
 		}
 		
@@ -136,29 +133,26 @@ public class EvoRequestServlet extends HttpServlet {
 		if (success){
 			response.setContentType("text/html");
 			PrintWriter out = response.getWriter();
-			out.print("<html><body>");
-			out.print("Your image evolution request was has been submitted.<br/>");
-			out.print("</body></html>");
+			out.print("<html><body><form action=\"dashboard.jsp\" method=\"get\">");
+			out.print("Your image evolution request has been submitted.<br/><br/>");
+			out.print("<input type=\"submit\" value=\"Return to dashboard\">");
+			out.print("</form></body></html>");
 		} else if (!permitted){
 			response.setContentType("text/html");
 			PrintWriter out = response.getWriter();
-			out.print("<html><body>");
-			out.print("Sorry. You do not have permission to submit image evolution requests.<br/>");
-			out.print("</body></html>");
+			out.print("<html><body><form action=\"dashboard.jsp\" method=\"get\">");
+			out.print("Sorry.<br>"
+					+"You do not have permission to submit image evolution requests.<br/><br/>");
+			out.print("<input type=\"submit\" value=\"Return to dashboard\">");
+			out.print("</form></body></html>");
 		} else {
 			response.setContentType("text/html");
 			PrintWriter out = response.getWriter();
-			out.print("<html><body>");
-			out.print("There was an error that prevented your image evolution " +
-					"request from being submitted. This is probably a bug.<br/>");
-			out.print("</body></html>");
+			out.print("<html><body><form action=\"dashboard.jsp\" method=\"get\">");
+			out.print("There was an error that prevented your image evolution "
+					+"request from being submitted. This is probably a bug.<br/><br/>");
+			out.print("<input type=\"submit\" value=\"Return to dashboard\">");
+			out.print("</form></body></html>");
 		}
 	}
-	
-
-	
-	
-	
-	
-	
 }
