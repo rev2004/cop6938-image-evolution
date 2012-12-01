@@ -18,11 +18,13 @@ import javax.imageio.ImageIO;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 
+import com.amazonaws.AmazonClientException;
 import com.amazonaws.HttpMethod;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.PropertiesCredentials;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.simpledb.AmazonSimpleDBClient;
 import com.amazonaws.services.simpledb.model.Attribute;
 import com.amazonaws.services.simpledb.model.GetAttributesRequest;
@@ -147,16 +149,47 @@ public class ImageManagement {
 	}
 	
 	public static InputStream getImage(String imgKey){
-		return s3.get().getObject("ImgEvo",imgKey).getObjectContent();
+		try {
+			if(imgKey!=null && !imgKey.equals("")){
+				S3Object obj = s3.get().getObject("ImgEvo",imgKey);
+				return (obj!=null) ? obj.getObjectContent() : null;
+			} else {
+				return null;
+			}
+		} catch (AmazonClientException e){
+			return null;
+		}
+	}
+	public static boolean imageExists(String imgKey){
+		try {
+			if (imgKey!=null && !imgKey.equals("")){
+				s3.get().getObjectMetadata("ImgEvo",imgKey);
+				return true;
+			} else {
+				return false;
+			}
+		} catch (AmazonClientException e){
+			return false;
+		}
+		
 	}
 	public static Map<String,String> getImgMetadata(String imgKey){
-		GetAttributesResult imgMeta = sdb.get().getAttributes(new GetAttributesRequest()
-		.withDomainName("ImgEvo_images")
-		.withItemName(imgKey)
-		.withConsistentRead(true));
-		if(!imgMeta.getAttributes().isEmpty()){
-			return Attrb2Map(imgMeta.getAttributes());
-		} else {
+		try {
+			if (imgKey!=null && !imgKey.equals("")){
+				GetAttributesResult imgMeta = sdb.get().getAttributes(
+						new GetAttributesRequest()
+							.withDomainName("ImgEvo_images")
+							.withItemName(imgKey)
+							.withConsistentRead(true));
+				if(!imgMeta.getAttributes().isEmpty()){
+					return Attrb2Map(imgMeta.getAttributes());
+				} else {
+					return null;
+				}
+			} else {
+				return null;
+			}
+		} catch (AmazonClientException e){
 			return null;
 		}
 	}
@@ -190,18 +223,26 @@ public class ImageManagement {
 		}
 	}
 	public static void setImgMetadata(String imageId, Map<String,String> attributes){
-		PutAttributesRequest putReq = new PutAttributesRequest();
-		// set session parameters
-		putReq = putReq.withDomainName("ImgEvo_images").withItemName(imageId);
-		for(Entry<String,String> attrib : attributes.entrySet()){
-			if (attrib.getKey()!=null && !attrib.getKey().equals("") &&
-					attrib.getValue()!=null && !attrib.getValue().equals("")){
-				putReq = putReq.withAttributes(
-						new ReplaceableAttribute(attrib.getKey(),
-								attrib.getValue(),true));
+		try {
+			if(imageId!=null && imageId.equals("") && attributes!=null){
+				PutAttributesRequest putReq = new PutAttributesRequest();
+				// set session parameters
+				putReq = putReq.withDomainName("ImgEvo_images").withItemName(imageId);
+				for(Entry<String,String> attrib : attributes.entrySet()){
+					if (attrib.getKey()!=null && !attrib.getKey().equals("")
+							&& attrib.getValue()!=null && !attrib.getValue().equals("")
+					){
+						putReq = putReq.withAttributes(
+								new ReplaceableAttribute(attrib.getKey(),
+										attrib.getValue(),true));
+					}
+				}
+				sdb.get().putAttributes(putReq);
 			}
+		} catch (AmazonClientException e){
+			e.printStackTrace();
+			return;
 		}
-		sdb.get().putAttributes(putReq);
 	}
 	
 	/* Methods for getting a signed URL for an image for a limited time */

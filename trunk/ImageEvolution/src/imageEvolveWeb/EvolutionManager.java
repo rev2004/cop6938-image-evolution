@@ -178,49 +178,41 @@ public class EvolutionManager implements Runnable{
 		try {
 			// make temporary job object
 			EvoJob tmp = new EvoJob();
-			System.out.println("EvoMgr-getQueueJob: made new tmp EvoJob");
 			// get message from queue (may wait a long time for a queue message)
-			System.out.println("EvoMgr-getQueueJob: do recv msgs");
 			ReqQueueManagement req = ReqQueueManagement.recvSqsMsg(900);
 			System.out.println("EvoMgr-getQueueJob: recvd msg, msg not_null="+(req!=null));
-			System.out.println("EvoMgr-getQueueJob: get target image from s3");
-			// get target image
-			InputStream imgS3 = ImageManagement.getImage(
-					(req.targetId==null||req.targetId.length()<1)?req.imageId+"_o":req.targetId);
-			System.out.println("EvoMgr-getQueueJob: target img not_null="+imgS3!=null);
-			System.out.println("EvoMgr-getQueueJob: make new ImgEvolution in tmp");
-			// make a EvoControl and ImgEvolution
-			tmp.evo = new ImgEvolution("evo");
-			System.out.println("EvoMgr-getQueueJob: made new ImgEvolution in tmp");
-			
-			System.out.println("EvoMgr-getQueueJob: read s3 file");
-			tmp.evo.sourceImg = ImageIO.read(imgS3);
-			System.out.println("EvoMgr-getQueueJob: s3 file read - close s3 file");
-			imgS3.close();
-			System.out.println("EvoMgr-getQueueJob: s3 file closed");
-			tmp.evo.outImg = req.imageId;
-			tmp.evo.control.size_x = tmp.evo.sourceImg.getWidth();
-			tmp.evo.control.size_y = tmp.evo.sourceImg.getHeight();
-			tmp.evo.control.polygons = 100;
-			tmp.evo.control.vertices = 6;
-			tmp.evo.control.population = 0;
-			tmp.evo.control.alg = Evolution.HC;
-			tmp.evo.control.initColor = EvoControl.InitColor.RAND;
-			tmp.evo.control.mutationMode = EvoControl.Mutation.MEDIUM;
-			tmp.evo.control.comparison = EvoControl.CompMode.DIFF;
-			tmp.evo.control.mutationChance = 0.0;
-			tmp.evo.control.mutationDegree = 0.0;
-			tmp.evo.control.uniformCross = false;
-			tmp.evo.control.parentCutoff = 0.0;
-			tmp.evo.control.killParents = false;
-			tmp.evo.control.rndCutoff = false;
-			tmp.evo.control.threshold = req.fitThresh;
-			tmp.evo.control.maxGenerations = req.genThresh;
-			tmp.evo.control.receiptHandle = req.receiptHandle;
-			System.out.println("EvoMgr-getQueueJob: make thread");
-			tmp.thread = new Thread(tmp.evo);
-			System.out.println("EvoMgr-getQueueJob: return tmp");
-			return tmp;
+			if(req!=null){
+				// get target image
+				InputStream imgS3 = ImageManagement.getImage(
+						(req.targetId==null||req.targetId.equals(""))?req.imageId+"_o":req.targetId);
+				// make a EvoControl and ImgEvolution
+				tmp.evo = new ImgEvolution("evo");
+				tmp.evo.sourceImg = ImageIO.read(imgS3);
+				imgS3.close();
+				tmp.evo.outImg = req.imageId;
+				tmp.evo.control.size_x = tmp.evo.sourceImg.getWidth();
+				tmp.evo.control.size_y = tmp.evo.sourceImg.getHeight();
+				tmp.evo.control.polygons = 100;
+				tmp.evo.control.vertices = 6;
+				tmp.evo.control.population = 0;
+				tmp.evo.control.alg = Evolution.HC;
+				tmp.evo.control.initColor = EvoControl.InitColor.RAND;
+				tmp.evo.control.mutationMode = EvoControl.Mutation.MEDIUM;
+				tmp.evo.control.comparison = EvoControl.CompMode.DIFF;
+				tmp.evo.control.mutationChance = 0.0;
+				tmp.evo.control.mutationDegree = 0.0;
+				tmp.evo.control.uniformCross = false;
+				tmp.evo.control.parentCutoff = 0.0;
+				tmp.evo.control.killParents = false;
+				tmp.evo.control.rndCutoff = false;
+				tmp.evo.control.threshold = req.fitThresh;
+				tmp.evo.control.maxGenerations = req.genThresh;
+				tmp.evo.control.receiptHandle = req.receiptHandle;
+				tmp.thread = new Thread(tmp.evo);
+				return tmp;
+			} else {
+				return null;
+			}
 		} catch (Exception e1) {
 			e1.printStackTrace();
 			return null;
