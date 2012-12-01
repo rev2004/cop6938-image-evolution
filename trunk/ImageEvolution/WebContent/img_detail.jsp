@@ -11,6 +11,12 @@
 	if (user == null){
 		// set the current url to be the return url
 		String retUrl = request.getRequestURI();
+		if (request.getQueryString()!=null
+				&& !request.getQueryString().equals("")
+		){
+			retUrl += "?"+request.getQueryString();
+		}
+		// url encode the return url
 		try {
 			retUrl = (new URLCodec()).encode(retUrl);
 		} catch (EncoderException e) {
@@ -19,7 +25,7 @@
 		}
 		// if return url valid, add to redirect to login page
 		if (retUrl!=null && retUrl.length()>0){
-			response.sendRedirect("login.jsp?retURL="+request.getRequestURI()+"?"+request.getQueryString());
+			response.sendRedirect("login.jsp?retURL="+retUrl);
 		} else {
 			response.sendRedirect("login.jsp");
 		}
@@ -37,7 +43,7 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<title>Insert title here</title>
+<title>Image Evolution - Image Details</title>
 </head>
 <body>
 	
@@ -75,10 +81,11 @@
 		</table>
 		<br/>
 		<table>
-			<tr><td>name</td><td>image.get("usr_name")</td></tr>
-			<tr><td>description</td><td>image.get("usr_description")</td></tr>
-			<tr><td>fitness</td><td>image.get("fitness")</td></tr>
-			<tr><td>generations</td><td>image.get("generations")</td></tr>
+			<tr><td>Image Id: </td><td><%= imgKey %></td></tr>
+			<tr><td>Name: </td><td><%= image.get("usr_name") %></td></tr>
+			<tr><td>Description: </td><td><%= image.get("usr_description") %></td></tr>
+			<tr><td>Fitness: </td><td><%= image.get("fitness") %></td></tr>
+			<tr><td>Generations: </td><td><%= image.get("generations") %></td></tr>
 		</table>
     <% } else { %>
 		<div>The specified image is not available to be viewed.</div>
