@@ -5,7 +5,12 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.URL;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 
 import javax.imageio.ImageIO;
@@ -13,6 +18,7 @@ import javax.imageio.ImageIO;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 
+import com.amazonaws.HttpMethod;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.PropertiesCredentials;
 import com.amazonaws.services.s3.AmazonS3Client;
@@ -25,7 +31,7 @@ import com.amazonaws.services.simpledb.model.PutAttributesRequest;
 import com.amazonaws.services.simpledb.model.ReplaceableAttribute;
 import com.amazonaws.services.simpledb.model.UpdateCondition;
 
-public class StorageManagement {
+public class ImageManagement {
 
 	
 	/** Source of randomness.
@@ -78,8 +84,7 @@ public class StorageManagement {
 	 * @param userId owner (creator) of image.
 	 * @return allocated Image 
 	 */
-	public static String allocateImageId(String suffix, String targetId, String userId, 
-			String name, String description){
+	public static String allocateImageId(String suffix, String userId){
 		boolean done = false;
 		String imageId = null;
 		while (!done){
@@ -91,27 +96,12 @@ public class StorageManagement {
 			PutAttributesRequest putReq = new PutAttributesRequest();
 			// set session parameters
 			putReq = putReq.withDomainName("ImgEvo_images").withItemName(imageId);
-			putReq = putReq.withAttributes(new ReplaceableAttribute("userId",
+			putReq = putReq.withAttributes(new ReplaceableAttribute("owner",
 					userId,true));
 			putReq = putReq.withAttributes(new ReplaceableAttribute("created",
 					created,true));
-			if (targetId!=null && !targetId.equals("")){
-				putReq = putReq.withAttributes(new ReplaceableAttribute("targetId",
-						targetId,true));
-			} else {
-				putReq = putReq.withAttributes(new ReplaceableAttribute("targetId",
-						imageId,true));
-			}
-			if (name!=null && !name.equals("")){
-				putReq = putReq.withAttributes(new ReplaceableAttribute("name",
-						name,true));
-			}
-			if (description!=null && !description.equals("")){
-				putReq = putReq.withAttributes(new ReplaceableAttribute("description",
-						description,true));
-			}
 			// set update conditions to prevent overwriting existing image
-			putReq = putReq.withExpected(new UpdateCondition().withName("userId").withExists(false));
+			putReq = putReq.withExpected(new UpdateCondition().withName("owner").withExists(false));
 			putReq = putReq.withExpected(new UpdateCondition().withName("created").withExists(false));
 			// make update
 			sdb.get().putAttributes(putReq);
@@ -119,12 +109,12 @@ public class StorageManagement {
 			GetAttributesResult existing = sdb.get().getAttributes(new GetAttributesRequest()
 					.withDomainName("ImgEvo_images")
 					.withItemName(imageId)
-					.withAttributeNames("userId")
+					.withAttributeNames("owner")
 					.withAttributeNames("created")
 					.withConsistentRead(true));
 			done = !existing.getAttributes().isEmpty();
 			for (Attribute a : existing.getAttributes()){
-				if (a.getName().equals("userId")){
+				if (a.getName().equals("owner")){
 					done = (done) ? a.getValue().equals(userId) : false;
 				} else if (a.getName().equals("created")){ 
 					done = (done) ? a.getValue().equals(created) : false;
@@ -159,6 +149,28 @@ public class StorageManagement {
 	public static InputStream getImage(String imgKey){
 		return s3.get().getObject("ImgEvo",imgKey).getObjectContent();
 	}
+	public static Map<String,String> getImgMetadata(String imgKey){
+		GetAttributesResult imgMeta = sdb.get().getAttributes(new GetAttributesRequest()
+		.withDomainName("ImgEvo_images")
+		.withItemName(imgKey)
+		.withConsistentRead(true));
+		if(!imgMeta.getAttributes().isEmpty()){
+			return Attrb2Map(imgMeta.getAttributes());
+		} else {
+			return null;
+		}
+	}
+	public static Map<String,String> Attrb2Map(List<Attribute> A){
+		if(A!=null){
+			Map<String,String> tmp = new HashMap<String,String>();
+			for (Attribute a : A){
+				tmp.put(a.getName(), a.getValue());
+			}
+			return tmp;
+		} else {
+			return null;
+		}
+	}
 	public static boolean storeImage(String imgKey, BufferedImage img){
 		try {
 			// write image data in memory
@@ -177,7 +189,37 @@ public class StorageManagement {
 			return false;
 		}
 	}
+	public static void setImgMetadata(String imageId, Map<String,String> attributes){
+		PutAttributesRequest putReq = new PutAttributesRequest();
+		// set session parameters
+		putReq = putReq.withDomainName("ImgEvo_images").withItemName(imageId);
+		for(Entry<String,String> attrib : attributes.entrySet()){
+			if (attrib.getKey()!=null && !attrib.getKey().equals("") &&
+					attrib.getValue()!=null && !attrib.getValue().equals("")){
+				putReq = putReq.withAttributes(
+						new ReplaceableAttribute(attrib.getKey(),
+								attrib.getValue(),true));
+			}
+		}
+		sdb.get().putAttributes(putReq);
+	}
 	
-	
+	/* Methods for getting a signed URL for an image for a limited time */
+	public static URL getImageUrl(String imgKey, int mills){
+		return s3.get().generatePresignedUrl("ImgEvo", imgKey, 
+				new Date((new Date()).getTime()+mills));
+	}
+	public static URL getImageUrl(String imgKey, int mills, HttpMethod verb){
+		return s3.get().generatePresignedUrl("ImgEvo", imgKey, 
+				new Date((new Date()).getTime()+mills), verb);
+	}
+	public static URL getImageUrl(String imgKey, Date expire){
+		return s3.get().generatePresignedUrl("ImgEvo", imgKey, 
+				expire);
+	}
+	public static URL getImageUrl(String imgKey, Date expire, HttpMethod verb){
+		return s3.get().generatePresignedUrl("ImgEvo", imgKey, 
+				expire, verb);
+	}
 	
 }

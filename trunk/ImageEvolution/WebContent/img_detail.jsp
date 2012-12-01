@@ -25,6 +25,13 @@
 	}
 %>
 
+<%
+	// get image metadata
+	String imgKey = request.getParameter("id");
+	Map<String,String> image = ImageManagement.getImgMetadata(imgKey);
+%>
+
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
@@ -33,5 +40,13 @@
 </head>
 <body>
 	<div style="padding:2px;border:1px solid red;">userName= <%= (user!=null)?user.get("email"):"null" %></div>
+	<div>
+		<div>
+		
+		</div>
+		<div>
+		</div>
+	</div>
+	
 </body>
 </html>
