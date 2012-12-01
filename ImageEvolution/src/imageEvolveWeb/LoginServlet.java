@@ -29,8 +29,11 @@ import org.openid4java.message.ax.FetchResponse;
 public class LoginServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
     
-	final static String YAHOO_ENDPOINT = "https://me.yahoo.com";
-	final static String GOOGLE_ENDPOINT = "https://www.google.com/accounts/o8/id";
+	public final static String DISCOVERY_GOOGLE = "https://www.google.com/accounts/o8/id";
+	public final static String DISCOVERY_YAHOO = "https://me.yahoo.com";
+	public final static String DISCOVERY_AOL = "https://openid.aol.com/";
+	public final static String DISCOVERY_MYOPENID = "https://myopenid.com/";
+	
 	//private ServletContext context;
 	public ConsumerManager manager;
 	
@@ -70,9 +73,13 @@ public class LoginServlet extends HttpServlet {
 			String thisUserId = identifier.getIdentifier();
 			String thisJSession = request.getSession().getId();
 			String thisEmail = request.getParameter("openid.ext1.value.email");
-			String thisFriendlyName = request.getParameter("openid.ext1.value.firstName");
-			//String thisFriendlyName = request.getParameter("openid.ext1.value.firstName")
-			//							+" "+request.getParameter("openid.ext1.value.lastName");
+			String fullName = request.getParameter("openid.ext1.value.fullname");
+			String firstName = request.getParameter("openid.ext1.value.firstName");
+			//String lastName = request.getParameter("openid.ext1.value.lastName");
+			String nickName = request.getParameter("openid.ext1.value.nickname");
+			String thisFriendlyName = (nickName!=null) ? nickName :
+									  (firstName!=null) ? firstName : 
+									  (fullName!=null) ? fullName : "unknown";
 			// make session and set cookie
 			String cookie = SessionManagement.makeSession(thisUserId, thisJSession,
 					thisEmail, thisFriendlyName).getCookie();
@@ -143,16 +150,24 @@ public class LoginServlet extends HttpServlet {
 			// Attribute Exchange example: fetching the 'email' attribute
 			FetchRequest fetch = FetchRequest.createFetchRequest();
 			// Specialized request for google
-			if(userSuppliedString.startsWith(GOOGLE_ENDPOINT)){
+			if(userSuppliedString.startsWith(DISCOVERY_GOOGLE)){
 				//fetch.addAttribute("email", "http://schema.openid.net/contact/email", true);
 				fetch.addAttribute("email", "http://axschema.org/contact/email", true);
 		    	fetch.addAttribute("firstName", "http://axschema.org/namePerson/first", true);
 		    	fetch.addAttribute("lastName", "http://axschema.org/namePerson/last", true);
+		    	fetch.addAttribute("nickname", "http://axschema.org/namePerson/friendly", true);
 			} 
 			// Specialized request for yahoo
-			else if (userSuppliedString.startsWith(YAHOO_ENDPOINT)){
+			else if (userSuppliedString.startsWith(DISCOVERY_YAHOO)){
 				fetch.addAttribute("email", "http://axschema.org/contact/email", true);
 		    	fetch.addAttribute("fullname", "http://axschema.org/namePerson", true);
+		    	fetch.addAttribute("nickname", "http://axschema.org/namePerson/friendly", true);
+			}
+			// Specialized request for aol
+			else if (userSuppliedString.startsWith(DISCOVERY_AOL)){
+				fetch.addAttribute("email", "http://axschema.org/contact/email", true);
+				fetch.addAttribute("fullname", "http://axschema.org/namePerson", true);
+			   	fetch.addAttribute("nickname", "http://axschema.org/namePerson/friendly", true);
 			}
 			// more generic request for other OpenId providers (myOpenId)
 			else {

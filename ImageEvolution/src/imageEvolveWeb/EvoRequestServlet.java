@@ -135,7 +135,7 @@ public class EvoRequestServlet extends HttpServlet {
 			PrintWriter out = response.getWriter();
 			out.print("<html><body><form action=\"dashboard.jsp\" method=\"get\">");
 			out.print("Your image evolution request has been submitted.<br/><br/>");
-			out.print("<input type=\"submit\" value=\"Return to dashboard\">");
+			out.print("<input type=\"submit\" value=\"Return to dashboard\" />");
 			out.print("</form></body></html>");
 		} else if (!permitted){
 			response.setContentType("text/html");
@@ -143,7 +143,7 @@ public class EvoRequestServlet extends HttpServlet {
 			out.print("<html><body><form action=\"dashboard.jsp\" method=\"get\">");
 			out.print("Sorry.<br>"
 					+"You do not have permission to submit image evolution requests.<br/><br/>");
-			out.print("<input type=\"submit\" value=\"Return to dashboard\">");
+			out.print("<input type=\"submit\" value=\"Return to dashboard\" />");
 			out.print("</form></body></html>");
 		} else {
 			response.setContentType("text/html");
@@ -151,7 +151,7 @@ public class EvoRequestServlet extends HttpServlet {
 			out.print("<html><body><form action=\"dashboard.jsp\" method=\"get\">");
 			out.print("There was an error that prevented your image evolution "
 					+"request from being submitted. This is probably a bug.<br/><br/>");
-			out.print("<input type=\"submit\" value=\"Return to dashboard\">");
+			out.print("<input type=\"submit\" value=\"Return to dashboard\" />");
 			out.print("</form></body></html>");
 		}
 	}

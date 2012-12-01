@@ -10,6 +10,12 @@
 	if (user == null){
 		// set the current url to be the return url
 		String retUrl = request.getRequestURI();
+		if (request.getQueryString()!=null
+				&& !request.getQueryString().equals("")
+		){
+			retUrl += "?"+request.getQueryString();
+		}
+		// url encode the return url
 		try {
 			retUrl = (new URLCodec()).encode(retUrl);
 		} catch (EncoderException e) {
@@ -18,7 +24,7 @@
 		}
 		// if return url valid, add to redirect to login page
 		if (retUrl!=null && retUrl.length()>0){
-			response.sendRedirect("login.jsp?retURL="+request.getRequestURI()+"?"+request.getQueryString());
+			response.sendRedirect("login.jsp?retURL="+retUrl);
 		} else {
 			response.sendRedirect("login.jsp");
 		}
@@ -29,7 +35,7 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<title>Insert title here</title>
+<title>Image Evolution - Image List</title>
 </head>
 <body>
 	<% if (user!=null) { %>

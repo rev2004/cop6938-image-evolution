@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -29,8 +30,11 @@ import com.amazonaws.services.simpledb.AmazonSimpleDBClient;
 import com.amazonaws.services.simpledb.model.Attribute;
 import com.amazonaws.services.simpledb.model.GetAttributesRequest;
 import com.amazonaws.services.simpledb.model.GetAttributesResult;
+import com.amazonaws.services.simpledb.model.Item;
 import com.amazonaws.services.simpledb.model.PutAttributesRequest;
 import com.amazonaws.services.simpledb.model.ReplaceableAttribute;
+import com.amazonaws.services.simpledb.model.SelectRequest;
+import com.amazonaws.services.simpledb.model.SelectResult;
 import com.amazonaws.services.simpledb.model.UpdateCondition;
 
 public class ImageManagement {
@@ -204,6 +208,19 @@ public class ImageManagement {
 			return null;
 		}
 	}
+	public static Map<String,String> Attrb2Map(Item i){
+		if(i!=null){
+			Map<String,String> tmp = new HashMap<String,String>();
+			for (Attribute a : i.getAttributes()){
+				tmp.put(a.getName(), a.getValue());
+			}
+			tmp.put("imgId", i.getName());
+			tmp.put("name", i.getName());
+			return tmp;
+		} else {
+			return null;
+		}
+	}
 	public static boolean storeImage(String imgKey, BufferedImage img){
 		try {
 			// write image data in memory
@@ -261,6 +278,23 @@ public class ImageManagement {
 	public static URL getImageUrl(String imgKey, Date expire, HttpMethod verb){
 		return s3.get().generatePresignedUrl("ImgEvo", imgKey, 
 				expire, verb);
+	}
+	
+	public static List<Map<String,String>> getUserImages(String userId){
+		try {
+			ArrayList<Map<String,String>> tmp = new ArrayList<Map<String,String>>();
+			SelectRequest qry = new SelectRequest();
+			qry.setConsistentRead(true);
+			qry.setSelectExpression("select * from `ImgEvo_images` where owner = '"+userId+"'");
+			SelectResult result = sdb.get().select(qry);
+			for(Item i : result.getItems()){
+				tmp.add(Attrb2Map(i));
+			}
+			return tmp;
+		} catch (AmazonClientException e){
+			e.printStackTrace();
+			return null;
+		}
 	}
 	
 }

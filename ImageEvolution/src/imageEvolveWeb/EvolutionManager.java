@@ -185,6 +185,10 @@ public class EvolutionManager implements Runnable{
 				// get target image
 				InputStream imgS3 = ImageManagement.getImage(
 						(req.targetId==null||req.targetId.equals(""))?req.imageId+"_o":req.targetId);
+				// if target image not found, stop and return null
+				if(imgS3==null){
+					return null;
+				}
 				// make a EvoControl and ImgEvolution
 				tmp.evo = new ImgEvolution("evo");
 				tmp.evo.sourceImg = ImageIO.read(imgS3);
