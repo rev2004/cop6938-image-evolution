@@ -56,7 +56,7 @@ public class ImageManagement {
 		@Override protected AmazonSimpleDBClient initialValue() { 
 			try {
 				AWSCredentials cred = new PropertiesCredentials(
-						EvoRequestServlet.class.getClassLoader()
+						RequestServlet.class.getClassLoader()
 				        .getResourceAsStream("AwsCredentials.properties"));
 				return new AmazonSimpleDBClient(cred);
 			} catch (IOException e) {
@@ -71,7 +71,7 @@ public class ImageManagement {
 		@Override protected AmazonS3Client initialValue() { 
 			try {
 				AWSCredentials cred = new PropertiesCredentials(
-						EvoRequestServlet.class.getClassLoader()
+						RequestServlet.class.getClassLoader()
 				        .getResourceAsStream("AwsCredentials.properties"));
 				return new AmazonS3Client(cred);
 			} catch (IOException e) {
@@ -97,7 +97,6 @@ public class ImageManagement {
 			// randomly guess a new session id
 			imageId = randomImageId(18)+((suffix!=null)?suffix:"");
 			String created = Long.toString((new Date()).getTime());
-			//System.out.println("rndSessionId: "+tmp.sessionId);
 			// create update request
 			PutAttributesRequest putReq = new PutAttributesRequest();
 			// set session parameters
@@ -106,6 +105,8 @@ public class ImageManagement {
 					userId,true));
 			putReq = putReq.withAttributes(new ReplaceableAttribute("created",
 					created,true));
+			putReq = putReq.withAttributes(new ReplaceableAttribute("isDeleted",
+					"false",true));
 			// set update conditions to prevent overwriting existing image
 			putReq = putReq.withExpected(new UpdateCondition().withName("owner").withExists(false));
 			putReq = putReq.withExpected(new UpdateCondition().withName("created").withExists(false));
@@ -177,6 +178,29 @@ public class ImageManagement {
 		}
 		
 	}
+	
+	public static void setImgMetadata(String imageId, Map<String,String> attributes){
+		try {
+			if(imageId!=null && !imageId.equals("") && attributes!=null){
+				PutAttributesRequest putReq = new PutAttributesRequest();
+				// set session parameters
+				putReq = putReq.withDomainName("ImgEvo_images").withItemName(imageId);
+				for(Entry<String,String> attrib : attributes.entrySet()){
+					if (attrib.getKey()!=null && !attrib.getKey().equals("")
+							&& attrib.getValue()!=null && !attrib.getValue().equals("")
+					){
+						putReq = putReq.withAttributes(
+								new ReplaceableAttribute(attrib.getKey(),
+										attrib.getValue(),true));
+					}
+				}
+				sdb.get().putAttributes(putReq);
+			}
+		} catch (AmazonClientException e){
+			e.printStackTrace();
+			return;
+		}
+	}
 	public static Map<String,String> getImgMetadata(String imgKey){
 		try {
 			if (imgKey!=null && !imgKey.equals("")){
@@ -221,6 +245,7 @@ public class ImageManagement {
 			return null;
 		}
 	}
+	
 	public static boolean storeImage(String imgKey, BufferedImage img){
 		try {
 			// write image data in memory
@@ -239,28 +264,53 @@ public class ImageManagement {
 			return false;
 		}
 	}
-	public static void setImgMetadata(String imageId, Map<String,String> attributes){
+	public static boolean deleteImage(String imgKey){
 		try {
-			if(imageId!=null && imageId.equals("") && attributes!=null){
+			System.out.println("deleteImage - imgKey="+imgKey);
+			if(imgKey!=null && !imgKey.equals("")){
+				/* here is where I would check if the image is used */
+				boolean originalShared = false;
+				boolean resultShared =false;
+				
+				// mark deleted in SimpleDB
 				PutAttributesRequest putReq = new PutAttributesRequest();
 				// set session parameters
-				putReq = putReq.withDomainName("ImgEvo_images").withItemName(imageId);
-				for(Entry<String,String> attrib : attributes.entrySet()){
-					if (attrib.getKey()!=null && !attrib.getKey().equals("")
-							&& attrib.getValue()!=null && !attrib.getValue().equals("")
-					){
-						putReq = putReq.withAttributes(
-								new ReplaceableAttribute(attrib.getKey(),
-										attrib.getValue(),true));
-					}
-				}
+				putReq = putReq.withDomainName("ImgEvo_images").withItemName(imgKey);
+				putReq = putReq.withAttributes(new ReplaceableAttribute("isDeleted",
+						"true",true));
+				putReq = putReq.withAttributes(new ReplaceableAttribute("deleted",
+						Long.toString((new Date()).getTime()),true));
 				sdb.get().putAttributes(putReq);
+				// if original image not shared
+				if(!originalShared){
+					// delete it from S3
+					s3.get().deleteObject("ImgEvo", imgKey+"_o");
+				}
+				// if original image not shared
+				if(!resultShared){
+					//delete it from S3
+					s3.get().deleteObject("ImgEvo", imgKey+"_r");
+				}
+				return true;
+			} else {
+				System.out.println("deleteImage - imgKey invalid");
+				return false;
 			}
-		} catch (AmazonClientException e){
+		} catch (Exception e) {
 			e.printStackTrace();
-			return;
+			return false;
 		}
 	}
+	
+	
+	public static String mapToString(Map<String,String> m){
+		String tmp = "{";
+		for(Entry<String,String> e : m.entrySet()){
+			tmp += "("+e.getKey()+","+e.getValue()+"),";
+		}
+		return tmp.substring(0, tmp.length()-1)+"}";
+	}
+	
 	
 	/* Methods for getting a signed URL for an image for a limited time */
 	public static URL getImageUrl(String imgKey, int mills){
@@ -285,7 +335,12 @@ public class ImageManagement {
 			ArrayList<Map<String,String>> tmp = new ArrayList<Map<String,String>>();
 			SelectRequest qry = new SelectRequest();
 			qry.setConsistentRead(true);
-			qry.setSelectExpression("select * from `ImgEvo_images` where owner = '"+userId+"'");
+			qry.setSelectExpression("select * from `ImgEvo_images`"
+					+" where owner = '"+userId+"'"
+					//+" and isDeleted != 'true'"
+					+" and (isDeleted = 'false' or isDeleted is null)"
+					//+" order by created desc"
+					);
 			SelectResult result = sdb.get().select(qry);
 			for(Item i : result.getItems()){
 				tmp.add(Attrb2Map(i));

@@ -35,7 +35,7 @@
 <%
 	// get image metadata
 	String imgKey = request.getParameter("id");
-	Map<String,String> image = ImageManagement.getImgMetadata(imgKey);
+	Map<String,String> imageMeta = ImageManagement.getImgMetadata(imgKey);
 %>
 
 
@@ -51,12 +51,12 @@
 		<div style="padding:2px;border:1px solid red;"> <%= user.get("email") %></div>
     <% } %>
 	
-	<% if (image!=null && user!=null
-			&& image.get("owner")!=null 
+	<% if (imageMeta!=null && user!=null
+			&& imageMeta.get("owner")!=null 
 			&& user.get("userId")!=null
-			&& image.get("owner").equals(user.get("userId"))
+			&& imageMeta.get("owner").equals(user.get("userId"))
 		){ 
-		String origImgKey = (image.get("targetId")!=null) ? image.get("targetId") : imgKey+"_o";
+		String origImgKey = (imageMeta.get("targetId")!=null) ? imageMeta.get("targetId") : imgKey+"_o";
 		String evoImgKey = imgKey+"_r";
 	%>
 		<table>
@@ -82,11 +82,28 @@
 		<br/>
 		<table>
 			<tr><td>Image Id: </td><td><%= imgKey %></td></tr>
-			<tr><td>Name: </td><td><%= image.get("usr_name") %></td></tr>
-			<tr><td>Description: </td><td><%= image.get("usr_description") %></td></tr>
-			<tr><td>Fitness: </td><td><%= image.get("fitness") %></td></tr>
-			<tr><td>Generations: </td><td><%= image.get("generations") %></td></tr>
+			<tr><td>Name: </td><td><%= imageMeta.get("usr_name") %></td></tr>
+			<tr><td>Description: </td><td><%= imageMeta.get("usr_description") %></td></tr>
+			<tr><td>Fitness: </td><td><%= imageMeta.get("fitness") %></td></tr>
+			<tr><td>Generations: </td><td><%= imageMeta.get("generations") %></td></tr>
 		</table>
+		<br/>
+		<table><tr>
+			<td>
+				<% // conditionally show delete image button
+					if (true) { %>
+					<form action="imageServlet?verb=delete&imgId=<%= imgKey %>" method="post">
+						<input type="submit" value="delete Image" />
+					</form>
+				<% } %>
+			</td>
+			<td>
+				<form action="dashboard.jsp" method="get">
+					<input type="submit" value="Return to Dashboard" />
+				</form>
+			</td>
+		</tr></table>
+		
     <% } else { %>
 		<div>The specified image is not available to be viewed.</div>
 	<% } %>
