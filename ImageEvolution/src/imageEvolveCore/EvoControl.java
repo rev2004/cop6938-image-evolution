@@ -53,6 +53,7 @@ public class EvoControl {
 	public boolean rndCutoff; // Flag if parent selection should be weighted random (otherwise top X%)
 	public double threshold; // Percentage fitness at which evolution can end
 	public long maxGenerations; // maximum number of generations
+	public boolean strictEvolve; // if both generation threshold and fitness threshold must be meet before evolution can end
 	public String receiptHandle; // SQS receiptHandle, used to clear the message from queue after completed
 	
 	/** Default constructor.
@@ -76,6 +77,7 @@ public class EvoControl {
 		rndCutoff = false;
 		threshold = 0.0;
 		maxGenerations =-1;
+		strictEvolve=false;
 		receiptHandle = null;
 	}
 

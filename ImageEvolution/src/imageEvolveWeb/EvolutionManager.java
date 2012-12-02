@@ -115,6 +115,8 @@ public class EvolutionManager implements Runnable{
 			putReq = putReq.withDomainName("ImgEvo_images").withItemName(evo.outImg);
 			putReq = putReq.withAttributes(new ReplaceableAttribute("fitness", 
 					Double.toString(evo.getBest().getFitness()),true));
+			putReq = putReq.withAttributes(new ReplaceableAttribute("generation", 
+					Integer.toString(evo.getBest().getGeneration()),true));
 			// get current values
 			GetAttributesResult existing = sdb.get().getAttributes(new GetAttributesRequest()
 				.withDomainName("ImgEvo_images").withItemName(evo.outImg)
@@ -211,6 +213,7 @@ public class EvolutionManager implements Runnable{
 				tmp.evo.control.rndCutoff = false;
 				tmp.evo.control.threshold = req.fitThresh;
 				tmp.evo.control.maxGenerations = req.genThresh;
+				tmp.evo.control.strictEvolve = req.strictThresh;
 				tmp.evo.control.receiptHandle = req.receiptHandle;
 				tmp.thread = new Thread(tmp.evo);
 				return tmp;

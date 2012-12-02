@@ -33,6 +33,7 @@ public class EvoImg {
 	ColorPolygon[] dna;
 	BufferedImage image;
 	double fitness;
+	int generation;
 	
 	/* Constructors */
 	
@@ -135,6 +136,12 @@ public class EvoImg {
 	 */
 	public double getFitness(){
 		return this.fitness;
+	}
+	/** get current generation
+	 * @return current generation
+	 */
+	public int getGeneration(){
+		return this.generation;
 	}
 	/** Comparator based on fitness.
 	 * Orders low fitness images before high fitness images

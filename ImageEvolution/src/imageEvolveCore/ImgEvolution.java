@@ -151,16 +151,16 @@ public class ImgEvolution implements Runnable{
 		//long startTime = System.currentTimeMillis();
 		// create initial random dna
 		this.best = new EvoImg(this.control);
+		this.best.generation = 0;
 		this.best.render();
 		this.best.compare(this.sourceImg);
 		// evolution loop
-		int cntGen=0; // generation counter
+		int cntGen=1; // generation counter
 		EvoImg test;
-		while (this.best==null 
-				|| this.best.fitness < this.control.threshold
-				|| (this.control.maxGenerations>0 && this.control.maxGenerations>=cntGen)){
+		while (continueEvolve(cntGen)){
 			// copy and mutate current best
 			test = this.best.copyDna();
+			test.generation = cntGen;
 			test.mutate(this.control);
 			test.render();
 			test.compare(sourceImg);
@@ -178,16 +178,19 @@ public class ImgEvolution implements Runnable{
 	private void evolveGA(){
 		// get start time
 		//long startTime = System.currentTimeMillis();
+		this.best = new EvoImg(this.control);
+		this.best.generation = 0;
+		this.best.render();
+		this.best.compare(this.sourceImg);
 		// create initial random population
 		this.population = new EvoImg[this.control.population];
 		for (int i=0; i<this.population.length; i++){
 			this.population[i] = new EvoImg(this.control);
+			this.population[i].generation = 0;
 		}
 		// evolution loop
-		int cntGen=0; // generation counter
-		while (this.best==null 
-				|| this.best.fitness < this.control.threshold
-				|| (this.control.maxGenerations>0 && this.control.maxGenerations>=cntGen)){
+		int cntGen=1; // generation counter
+		while (continueEvolve(cntGen)){
 			// render each image and calculate fitness
 			for (EvoImg a : this.population){
 				if(a.image==null){
@@ -204,7 +207,7 @@ public class ImgEvolution implements Runnable{
 				this.best = this.population[this.control.population-1];
 			}
 			// create next population
-			this.nextGeneration();
+			this.nextGeneration(cntGen);
 			// increment generation counter
 			cntGen++;
 		}
@@ -213,7 +216,7 @@ public class ImgEvolution implements Runnable{
 	 * Computes the next generation of the population using
 	 * parameters and flags set in the EvoControl.
 	 */
-	private void nextGeneration(){
+	private void nextGeneration(int generation){
 		// initializing
 		EvoImg[] newPop = new EvoImg[this.population.length];
 		int newPopPtr=0;
@@ -242,6 +245,8 @@ public class ImgEvolution implements Runnable{
 					this.population[this.population.length-(int)Math.abs(rndSrc.get().nextGaussian()*parentRange)-1],
 					this.population[this.population.length-(int)Math.abs(rndSrc.get().nextGaussian()*parentRange)-1],
 					this.control.uniformCross);
+			tmp[0].generation = generation;
+			tmp[1].generation = generation;
 			// mutate children
 			tmp[0].mutate(this.control);
 			tmp[1].mutate(this.control);
@@ -255,6 +260,23 @@ public class ImgEvolution implements Runnable{
 		}
 		// set population to be the new population
 		this.population = newPop;
+	}
+	
+	private boolean continueEvolve(int generation){
+		if (this.control.strictEvolve
+			&& this.best.fitness < this.control.threshold
+			&& this.control.maxGenerations>0
+			&& this.control.maxGenerations>=generation
+		){
+			return true;
+			
+		} else if(this.best.fitness < this.control.threshold
+			|| (this.control.maxGenerations>=generation
+				&& this.control.maxGenerations>0)
+		){
+			return true;
+		}
+		return false;
 	}
 	
 	/* Input-Output methods */
