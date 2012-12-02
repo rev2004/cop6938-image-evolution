@@ -40,7 +40,6 @@
 </head>
 <body>
 	<% if (user!=null) { %>
-		<div style="padding:2px;border:1px solid red;"> <%= user.get("email") %></div>
 		<div>
 			Welcome, <%= user.get("friendlyName") %><br/>
 		</div>
