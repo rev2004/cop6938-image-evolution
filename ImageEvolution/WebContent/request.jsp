@@ -38,11 +38,6 @@
 <title>Image Evolution - Evolution Request</title>
 </head>
 <body>
-	
-	<% if (user!=null) { %>
-		<div style="padding:2px;border:1px solid red;"> <%= user.get("email") %></div>
-    <% } %>
-    
 	<div>
 		Please select the file you would like to use as a target for evolution.<br/>
 		You may also provide a name and description for this image to help you organize your collection.

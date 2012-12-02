@@ -47,10 +47,6 @@
 </head>
 <body>
 	
-	<% if (user!=null) { %>
-		<div style="padding:2px;border:1px solid red;"> <%= user.get("email") %></div>
-    <% } %>
-	
 	<% if (imageMeta!=null && user!=null
 			&& imageMeta.get("owner")!=null 
 			&& user.get("userId")!=null
