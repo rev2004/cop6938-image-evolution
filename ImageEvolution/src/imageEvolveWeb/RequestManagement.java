@@ -13,7 +13,7 @@ import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
 
-public class ReqQueueManagement {
+public class RequestManagement {
 	
 	/** Simple Queue Service connection;
 	 * Thread local used to prevent blocking when threads concurrent.
@@ -22,7 +22,7 @@ public class ReqQueueManagement {
 		@Override protected AmazonSQSClient initialValue() { 
 			try {
 				AWSCredentials cred = new PropertiesCredentials(
-						EvoRequestServlet.class.getClassLoader()
+						RequestServlet.class.getClassLoader()
 				        .getResourceAsStream("AwsCredentials.properties"));
 				return new AmazonSQSClient(cred);
 			} catch (IOException e) {
@@ -46,7 +46,7 @@ public class ReqQueueManagement {
 	public String receiptHandle; // SQS receiptHandle, used to clear the message from queue after completed
 	
 	
-	public ReqQueueManagement(){
+	public RequestManagement(){
 		imageId=null;
 		targetId=null;
 		baseGen=null;
@@ -71,8 +71,8 @@ public class ReqQueueManagement {
 		return msg;
 	}
 	
-	public static ReqQueueManagement parseMsg(JSONObject msg){
-		ReqQueueManagement tmp = new ReqQueueManagement();
+	public static RequestManagement parseMsg(JSONObject msg){
+		RequestManagement tmp = new RequestManagement();
 		tmp.imageId = msg.optString("imageId");
 		tmp.targetId = msg.optString("targetId");
 		tmp.baseGen = msg.optString("baseGen");
@@ -81,7 +81,7 @@ public class ReqQueueManagement {
 		tmp.strictThresh = msg.optBoolean("strictThresh");
 		return tmp;
 	}
-	public static ReqQueueManagement parseMsg(String msg){
+	public static RequestManagement parseMsg(String msg){
 		try {
 			return parseMsg(new JSONObject(msg));
 		} catch (JSONException e) {
@@ -90,7 +90,7 @@ public class ReqQueueManagement {
 		}
 	}
 
-	public static void sendSqsMsg(ReqQueueManagement req){
+	public static void sendSqsMsg(RequestManagement req){
 		sqs.get().sendMessage(new SendMessageRequest(sqsQueueUrl, 
 				req.createMsg().toString()));
 	}
@@ -100,10 +100,10 @@ public class ReqQueueManagement {
 	 retrieve requests after being retrieved by a ReceiveMessage request.
 	 * @return
 	 */
-	public static ReqQueueManagement recvSqsMsg(int visTimeout){
-		ReqQueueManagement tmp = null;
+	public static RequestManagement recvSqsMsg(int visTimeout){
+		RequestManagement tmp = null;
 		ReceiveMessageRequest req = new ReceiveMessageRequest();
-		req = req.withQueueUrl(ReqQueueManagement.sqsQueueUrl);
+		req = req.withQueueUrl(RequestManagement.sqsQueueUrl);
 		req = req.withMaxNumberOfMessages(1);
 		req = req.withVisibilityTimeout(visTimeout);
 		req = req.withWaitTimeSeconds(10); // 10 second
@@ -130,7 +130,7 @@ public class ReqQueueManagement {
 	
 	public static void delSqsMsg(String receiptHandle){
 		DeleteMessageRequest del = new DeleteMessageRequest()
-			.withQueueUrl(ReqQueueManagement.sqsQueueUrl)
+			.withQueueUrl(RequestManagement.sqsQueueUrl)
 			.withReceiptHandle(receiptHandle);
 		sqs.get().deleteMessage(del);
 	}

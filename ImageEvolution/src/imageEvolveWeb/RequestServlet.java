@@ -27,7 +27,7 @@ import imageEvolveWeb.SessionManagement;
 /**
  * Servlet implementation class EvoReqServlet
  */
-public class EvoRequestServlet extends HttpServlet {
+public class RequestServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 	
 	/** Simple Storage Service connection;
@@ -37,7 +37,7 @@ public class EvoRequestServlet extends HttpServlet {
 		@Override protected AmazonS3Client initialValue() { 
 			try {
 				AWSCredentials cred = new PropertiesCredentials(
-						EvoRequestServlet.class.getClassLoader()
+						RequestServlet.class.getClassLoader()
 				        .getResourceAsStream("AwsCredentials.properties"));
 				return new AmazonS3Client(cred);
 			} catch (IOException e) {
@@ -46,7 +46,7 @@ public class EvoRequestServlet extends HttpServlet {
 		}
 	};
 	
-    public EvoRequestServlet() {
+    public RequestServlet() {
         super();
     }
 	
@@ -117,14 +117,14 @@ public class EvoRequestServlet extends HttpServlet {
 			fileMeta.setContentLength(targetSize);
 			s3.get().putObject("ImgEvo", fileKey, targetImage, fileMeta);
 			// issue request to SQS
-			ReqQueueManagement sqsReq = new ReqQueueManagement();
+			RequestManagement sqsReq = new RequestManagement();
 			sqsReq.imageId = imgKey;
 			sqsReq.targetId = fileKey;
 			sqsReq.baseGen = null;
 			sqsReq.fitThresh = 0.85;
 			sqsReq.genThresh = 10000;
 			sqsReq.strictThresh = false;
-			ReqQueueManagement.sendSqsMsg(sqsReq);
+			RequestManagement.sendSqsMsg(sqsReq);
 		} else {
 			success = false;
 		}

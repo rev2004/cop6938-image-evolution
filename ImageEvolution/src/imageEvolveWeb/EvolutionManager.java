@@ -30,7 +30,7 @@ public class EvolutionManager implements Runnable{
 		@Override protected AmazonSimpleDBClient initialValue() { 
 			try {
 				AWSCredentials cred = new PropertiesCredentials(
-						EvoRequestServlet.class.getClassLoader()
+						RequestServlet.class.getClassLoader()
 						.getResourceAsStream("AwsCredentials.properties"));
 				return new AmazonSimpleDBClient(cred);
 			} catch (IOException e) {
@@ -169,7 +169,7 @@ public class EvolutionManager implements Runnable{
 		}
 		System.out.println("EvoMgr-storeJobResult: remove queue record");
 		// remove from queue
-		ReqQueueManagement.delSqsMsg(evo.control.receiptHandle);
+		RequestManagement.delSqsMsg(evo.control.receiptHandle);
 		System.out.println("EvoMgr-storeJobResult: return");
 		return true;
 	}
@@ -179,7 +179,7 @@ public class EvolutionManager implements Runnable{
 			// make temporary job object
 			EvoJob tmp = new EvoJob();
 			// get message from queue (may wait a long time for a queue message)
-			ReqQueueManagement req = ReqQueueManagement.recvSqsMsg(900);
+			RequestManagement req = RequestManagement.recvSqsMsg(900);
 			System.out.println("EvoMgr-getQueueJob: recvd msg, msg not_null="+(req!=null));
 			if(req!=null){
 				// get target image

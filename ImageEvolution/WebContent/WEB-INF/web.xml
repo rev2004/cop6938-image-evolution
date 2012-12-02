@@ -9,6 +9,9 @@
     <welcome-file>default.htm</welcome-file>
     <welcome-file>default.jsp</welcome-file>
   </welcome-file-list>
+  <listener>
+    <listener-class>imageEvolveWeb.EvolutionManagerListener</listener-class>
+  </listener>
   <servlet>
     <description>OpenId based login service</description>
     <display-name>loginServlet</display-name>
@@ -20,26 +23,23 @@
     <url-pattern>/loginServlet</url-pattern>
   </servlet-mapping>
   <servlet>
-    <description>Servlet to handle image requests</description>
-    <display-name>evoRequestServlet</display-name>
-    <servlet-name>evoRequestServlet</servlet-name>
-    <servlet-class>imageEvolveWeb.EvoRequestServlet</servlet-class>
+    <description>Servlet to handle image evolution requests</description>
+    <display-name>requestServlet</display-name>
+    <servlet-name>requestServlet</servlet-name>
+    <servlet-class>imageEvolveWeb.RequestServlet</servlet-class>
   </servlet>
   <servlet-mapping>
-    <servlet-name>evoRequestServlet</servlet-name>
-    <url-pattern>/evoRequestServlet</url-pattern>
+    <servlet-name>requestServlet</servlet-name>
+    <url-pattern>/requestServlet</url-pattern>
   </servlet-mapping>
   <servlet>
-    <description>test running the evo manager and core</description>
-    <display-name>TestEvoCoreServlet</display-name>
-    <servlet-name>TestEvoCoreServlet</servlet-name>
-    <servlet-class>imageEvolveWeb.TestEvoCoreServlet</servlet-class>
+    <description>Servlet for handling misc Image maintenance.</description>
+    <display-name>imageServlet</display-name>
+    <servlet-name>imageServlet</servlet-name>
+    <servlet-class>imageEvolveWeb.ImageServlet</servlet-class>
   </servlet>
   <servlet-mapping>
-    <servlet-name>TestEvoCoreServlet</servlet-name>
-    <url-pattern>/TestEvoCoreServlet</url-pattern>
+    <servlet-name>imageServlet</servlet-name>
+    <url-pattern>/imageServlet</url-pattern>
   </servlet-mapping>
-  <listener>
-    <listener-class>imageEvolveWeb.EvolutionManagerListener</listener-class>
-  </listener>
 </web-app>

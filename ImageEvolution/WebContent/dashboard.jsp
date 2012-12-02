@@ -54,33 +54,36 @@
 			</table>
 		</div>
 		<br/>
-		<div> <span style="font-size:large;font-weight:bold;">Images</span>
+		<div>
 			<% // get list of user's images
 				List<Map<String,String>> myImages = ImageManagement.getUserImages(user.get("userId"));
 			%>
-			
-			<% // conditionally show new (request) image button
-				if (user.get("canEvoRequest")!=null &&
-					user.get("canEvoRequest").equals("true")
-				) { %>
-				<form action="request.jsp" method="get">
-					<input type="submit" value="New Image" />
-				</form>
-			<% } %>
-				<!--<form action="img_list.jsp" method="get">
+			<table><tr>
+				<td><span style="font-size:large;font-weight:bold;">Images</span></td>
+				<td>
+					<% // conditionally show new (request) image button
+						if (user.get("canEvoRequest")!=null &&
+							user.get("canEvoRequest").equals("true")
+						) { %>
+						<form action="request.jsp" method="get">
+							<input type="submit" value="New Image" />
+						</form>
+					<% } %>
+				</td>
+				<!--<td><form action="img_list.jsp" method="get">
 					<input type="submit" value="Show All" />
-				</form>-->
-			
+				</form></td>-->
+			</tr></table>
 			<table style="border-width:1px;border-spacing:4px;border-style: solid;border-color: black;">
-				<% if (myImages!=null && !myImages.isEmpty()) { %>
+				<% if (myImages!=null  && !myImages.isEmpty()) { %>
 					<tr><th>Image Id</th><th>Name</th><th>Fitness</th></tr>
 					<% for (Map<String,String> img : myImages) { %>
 						<tr>
 							<td>
-								<a href="<%= user.get("imgId") %>"><%= user.get("imgId") %></a>
+								<a href="img_detail.jsp?id=<%= img.get("imgId") %>"><%= img.get("imgId") %></a>
 							</td>
-							<td><%= user.get("usr_name") %></td>
-							<td><%= user.get("fitness") %></td>
+							<td><%= img.get("usr_name") %></td>
+							<td><%= img.get("fitness") %></td>
 						</tr>
 					<% } %>
 				<% } else { %>
@@ -88,6 +91,6 @@
 				<% } %>
 			</table>
 		</div>
-    <% } %>
+	<% } %>
 </body>
 </html>

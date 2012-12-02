@@ -47,7 +47,7 @@
 		Please select the file you would like to use as a target for evolution.<br/>
 		You may also provide a name and description for this image to help you organize your collection.
 	</div><br/>
-	<form action="evoRequestServlet" method="post" enctype="multipart/form-data">
+	<form action="requestServlet" method="post" enctype="multipart/form-data">
 		<table>
 		<tr><td style="text-align:right">name:&nbsp;</td><td><input type="text" name="name" /></td></tr>
 		<tr><td style="text-align:right">description:&nbsp;</td><td><input type="text" name="description" /></td></tr>
