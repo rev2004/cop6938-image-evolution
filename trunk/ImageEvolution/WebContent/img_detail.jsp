@@ -81,7 +81,7 @@
 			<tr><td>Name: </td><td><%= imageMeta.get("usr_name") %></td></tr>
 			<tr><td>Description: </td><td><%= imageMeta.get("usr_description") %></td></tr>
 			<tr><td>Fitness: </td><td><%= imageMeta.get("fitness") %></td></tr>
-			<tr><td>Generations: </td><td><%= imageMeta.get("generations") %></td></tr>
+			<tr><td>Generations: </td><td><%= imageMeta.get("generation") %></td></tr>
 		</table>
 		<br/>
 		<table><tr>
