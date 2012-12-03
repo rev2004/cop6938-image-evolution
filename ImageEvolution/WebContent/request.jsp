@@ -44,9 +44,31 @@
 	</div><br/>
 	<form action="requestServlet" method="post" enctype="multipart/form-data">
 		<table>
-		<tr><td style="text-align:right">name:&nbsp;</td><td><input type="text" name="name" /></td></tr>
-		<tr><td style="text-align:right">description:&nbsp;</td><td><input type="text" name="description" /></td></tr>
-		<tr><td style="text-align:right">file:&nbsp;</td><td><input type="file" name="file" /></td></tr>
+		<tr>
+			<td style="text-align:right">name:&nbsp;</td>
+			<td><input type="text" name="name" /></td>
+		</tr>
+		<tr>
+			<td style="text-align:right">description:&nbsp;</td>
+			<td><input type="text" name="description" /></td>
+		</tr>
+		<tr>
+			<td style="text-align:right">file:&nbsp;</td>
+			<td><input type="file" name="file" /></td>
+		</tr>
+		<tr>
+			<td style="text-align:right">fitness:&nbsp;</td>
+			<td><input type="text" name="fitness" value="0.85" /></td>
+		</tr>
+		<tr>
+			<td style="text-align:right">generations:&nbsp;</td>
+			<td><input type="text" name="generations" value="10000" /></td>
+		</tr>
+		<tr>
+			<td style="text-align:right">&nbsp;</td>
+			<td><input type="checkbox" name="strict" value="strict" />&nbsp;Require both</td>
+		</tr>
+
 		<tr><td>&nbsp;</td><td style="padding-top:5px;"><input type="submit" value="Submit" /></td></tr>
 		</table>
 	</form>

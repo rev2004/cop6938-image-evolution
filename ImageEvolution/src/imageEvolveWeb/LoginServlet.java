@@ -39,7 +39,7 @@ public class LoginServlet extends HttpServlet {
 	
 	// configure the return_to URL where your application will receive
 	// the authentication responses from the OpenID provider
-	public final String baseReturnUrl = "http://localhost:8080/ImageEvolution/loginServlet";
+	public final String baseReturnUrl = "https://imgevo-demo.elasticbeanstalk.com/loginServlet";
 	
 	
 	public void init(ServletConfig config) throws ServletException {
@@ -85,7 +85,7 @@ public class LoginServlet extends HttpServlet {
 					thisEmail, thisFriendlyName).getCookie();
 			Cookie authCookie = new Cookie("authToken",cookie);
 			authCookie.setMaxAge(-1);
-			//authCookie.setSecure(true);
+			authCookie.setSecure(true);
 			response.addCookie(authCookie);
 			
 			// get return URL from cookie if exists
