@@ -57,6 +57,9 @@ public class RequestServlet extends HttpServlet {
 		InputStream targetImage = null;
 		String targetType = null;
 		long targetSize = 0;
+		double fitness = 0.0;
+		int generations = 0;
+		boolean strict = false;
 		boolean success = true;
 		
 		// get current user
@@ -83,26 +86,44 @@ public class RequestServlet extends HttpServlet {
 			}
 			// Process the uploaded items
 			for(FileItem item : items) {
-				if (item.isFormField()) {
-					if(item.getFieldName().equals("name")){
-						name = item.getString();
-					} else if (item.getFieldName().equals("description")){
-						description = item.getString();
+				if(item.getFieldName().equals("name")){
+					name = item.getString();
+				} else if (item.getFieldName().equals("description")){
+					description = item.getString();
+				}
+				if(item.getFieldName().equals("file")){
+					targetImage = item.getInputStream();
+					targetType = item.getContentType();
+					targetSize = item.getSize();
+				}
+				else if (item.getFieldName().equals("fitness")){
+					try {
+						fitness = Double.parseDouble(item.getString());
+					} catch (NumberFormatException e) {
+						success = false;
 					}
-				} else {
-					if(item.getFieldName().equals("file")){
-						targetImage = item.getInputStream();
-						targetType = item.getContentType();
-						targetSize = item.getSize();
+				}
+				else if (item.getFieldName().equals("generations")){
+					try {
+						generations = Integer.parseInt(item.getString());
+					} catch (NumberFormatException e) {
+						success = false;
+					}
+				}
+				else if (item.getFieldName().equals("strict")){
+					if (item.getString()!=null 
+							&& item.getString().equalsIgnoreCase("strict")){
+						strict = true;
+					} else if (Boolean.parseBoolean(item.getString())){
+						strict = true;
 					}
 				}
 			}
-		} else{
+		} else {
 			success=false;
 		}
-		
-		// if a target provided and size is less than 1MiB
-		if(targetImage!=null && targetSize>0 && targetSize<=1048576){
+		// if previous steps successful and a target provided and size is less than 1MiB
+		if(success && targetImage!=null && targetSize>0 && targetSize<=1048576){
 			// get image Id and setup in simpleDB
 			String imgKey = ImageManagement.allocateImageId(null, user.get("itemName"));
 			String fileKey = imgKey+"_o";
@@ -121,14 +142,13 @@ public class RequestServlet extends HttpServlet {
 			sqsReq.imageId = imgKey;
 			sqsReq.targetId = fileKey;
 			sqsReq.baseGen = null;
-			sqsReq.fitThresh = 0.85;
-			sqsReq.genThresh = 10000;
-			sqsReq.strictThresh = false;
+			sqsReq.fitThresh = fitness;
+			sqsReq.genThresh = generations;
+			sqsReq.strictThresh = strict;
 			RequestManagement.sendSqsMsg(sqsReq);
 		} else {
 			success = false;
 		}
-		
 		// display result to user
 		if (success){
 			response.setContentType("text/html");
